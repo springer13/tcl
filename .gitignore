@@ -1,0 +1,7 @@
+*.dSYM
+*tags
+*.o
+*.swp
+*.swo
+*.exe
+lib/
