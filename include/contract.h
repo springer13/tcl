@@ -16,8 +16,7 @@
 */
 
 
-#ifndef TCL_CONTRACT_H
-#define TCL_CONTRACT_H
+#pragma once
 
 /// \page pg_contract Tensor Contraction
 ///
@@ -44,4 +43,15 @@ namespace tcl{
                   const floatType beta,        Tensor<floatType> *C, int useTTGT = 1);
 }
 
-#endif
+extern "C"{
+void sTensorMult(const float alpha, const float *A, const long *sizeA, const long *outerSizeA, const char* indA,
+                                    const float *B, const long *sizeB, const long *outerSizeB, const char* indB,
+                 const float beta ,       float *C, const long *sizeC, const long *outerSizeC, const char* indC);
+
+void dTensorMult(const double alpha, const double *A, const long *sizeA, const long *outerSizeA, const char* indA,
+                                     const double *B, const long *sizeB, const long *outerSizeB, const char* indB,
+                 const double beta ,       double *C, const long *sizeC, const long *outerSizeC, const char* indC);
+
+void randomNumaAwareInit(float *data, const long *size, int dim);
+}
+

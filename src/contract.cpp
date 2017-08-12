@@ -569,7 +569,7 @@ namespace tcl
       if( !isIdentity(permA) ) {
          // packing of A is required
          auto sizeA = permute(permA, A->getSize());
-         bufferA = (float*) memBroker.requestMemory(totalSizeA);
+         bufferA = (floatType*) memBroker.requestMemory(totalSizeA);
 #ifdef DEBUG
          printVector(A->getSize(), "sizeA in");
          printVector(A->getOuterSize(), "outerSizeA in");
@@ -604,7 +604,7 @@ namespace tcl
          printVector(sizeB, "sizeB out");
 #endif
          // packing of B is required
-         bufferB = (float*) memBroker.requestMemory(totalSizeB);
+         bufferB = (floatType*) memBroker.requestMemory(totalSizeB);
          // create plan for Transposition
          auto plan = hptt::create_plan( permB, B->getDim(),
                1, B->getData(), B->getSize(), B->getOuterSize(), 
@@ -619,7 +619,7 @@ namespace tcl
 
       if( !isIdentity(permC) ) {
          betaGEMM = 0;
-         bufferC = (float*) memBroker.requestMemory(totalSizeC);
+         bufferC = (floatType*) memBroker.requestMemory(totalSizeC);
       }else
          bufferC = C->getData();
 
@@ -825,11 +825,10 @@ namespace tcl
                      if( betaIsZero )
                         //C[i*stridesC1 + j * stridesC0] = alpha * dataA[i*stridesA1 + j * stridesA0] * dataB[i*stridesB1 + j * stridesB0];
                         dataC[i*stridesC0 + j*stridesC1] = alpha * contractedLoops(stridesA, &dataA[i*stridesA0 + j*stridesA1], 
-                              stridesB, &dataB[i*stridesB0 + j*stridesB1], sizes, loop+2) + 
-                           beta * dataC[i*stridesC0 + j * stridesC1];
+                              stridesB, &dataB[i*stridesB0 + j*stridesB1], sizes, loop+2);
                      else
                         dataC[i*stridesC0 + j*stridesC1] = alpha * contractedLoops(stridesA, &dataA[i*stridesA0 + j*stridesA1], 
-                              stridesB, &dataB[i*stridesB0 + j*stridesB1], sizes, loop+2);
+                              stridesB, &dataB[i*stridesB0 + j*stridesB1], sizes, loop+2) + beta * dataC[i*stridesC0 + j * stridesC1];
                     ))))))
             }else{
 #pragma omp parallel for collapse(2)
@@ -870,9 +869,9 @@ namespace tcl
          }else{
             // recurse without spawning threads
             if( betaIsZero )
-               (*dataC) = alpha * contractedLoops(stridesA, dataA, stridesB, dataB, sizes, loop) + beta * (*dataC);
-            else
                (*dataC) = alpha * contractedLoops(stridesA, dataA, stridesB, dataB, sizes, loop);
+            else
+               (*dataC) = alpha * contractedLoops(stridesA, dataA, stridesB, dataB, sizes, loop) + beta * (*dataC);
          }
       }
    }
@@ -1008,6 +1007,7 @@ namespace tcl
       return SUCCESS;
    }
 
+
    template<typename floatType>
    error multiply(const floatType alpha, const Tensor<floatType> *A,
                                          const Tensor<floatType> *B, 
@@ -1079,3 +1079,91 @@ namespace tcl
    template error multiply<float>(const float alpha, const Tensor<float> *A, const Tensor<float> *B, 
                                   const float beta,        Tensor<float> *C, int useTTGT);
 }
+
+extern "C"
+{
+void sTensorMult(const float alpha, const float *dataA, const long *sizeA, const long *outerSizeA, const char* indA,
+                                    const float *dataB, const long *sizeB, const long *outerSizeB, const char* indB,
+                 const float beta ,       float *dataC, const long *sizeC, const long *outerSizeC, const char* indC)
+{
+   tcl::indicesType indicesA, indicesB, indicesC;
+   tcl::split(std::string(indA), ',', indicesA);
+   tcl::split(std::string(indB), ',', indicesB);
+   tcl::split(std::string(indC), ',', indicesC);
+   int dimA = indicesA.size();
+   int dimB = indicesB.size();
+   int dimC = indicesC.size();
+   std::vector<tcl::sizeType> sizeA_, outerSizeA_;
+   std::vector<tcl::sizeType> sizeB_, outerSizeB_;
+   std::vector<tcl::sizeType> sizeC_, outerSizeC_;
+   for(int i=0; i < dimA; ++i){
+      sizeA_.emplace_back(sizeA[i]);
+      outerSizeA_.emplace_back(outerSizeA[i]);
+   }
+   for(int i=0; i < dimB; ++i){
+      sizeB_.emplace_back(sizeB[i]);
+      outerSizeB_.emplace_back(outerSizeB[i]);
+   }
+   for(int i=0; i < dimC; ++i){
+      sizeC_.emplace_back(sizeC[i]);
+      outerSizeC_.emplace_back(outerSizeC[i]);
+   }
+   std::vector<tcl::sizeType> offsets;
+
+   tcl::Tensor<float> A( sizeA_, const_cast<float*>(dataA), outerSizeA_, indicesA, offsets);
+   tcl::Tensor<float> B( sizeB_, const_cast<float*>(dataB), outerSizeB_, indicesB, offsets);
+   tcl::Tensor<float> C( sizeC_,                    dataC , outerSizeC_, indicesC, offsets);
+
+   if( tcl::multiply(alpha, &A, &B, beta, &C) != tcl::SUCCESS )
+     printf("[TCL] ERROR: some error occured in multiply()\n"); 
+}
+
+void dTensorMult(const double alpha, const double *dataA, const long *sizeA, const long *outerSizeA, const char* indA,
+                                     const double *dataB, const long *sizeB, const long *outerSizeB, const char* indB,
+                 const double beta ,       double *dataC, const long *sizeC, const long *outerSizeC, const char* indC)
+{
+   tcl::indicesType indicesA, indicesB, indicesC;
+   tcl::split(std::string(indA), ',', indicesA);
+   tcl::split(std::string(indB), ',', indicesB);
+   tcl::split(std::string(indC), ',', indicesC);
+   int dimA = indicesA.size();
+   int dimB = indicesB.size();
+   int dimC = indicesC.size();
+   std::vector<tcl::sizeType> sizeA_, outerSizeA_;
+   std::vector<tcl::sizeType> sizeB_, outerSizeB_;
+   std::vector<tcl::sizeType> sizeC_, outerSizeC_;
+   for(int i=0; i < dimA; ++i){
+      sizeA_.emplace_back(sizeA[i]);
+      outerSizeA_.emplace_back(outerSizeA[i]);
+   }
+   for(int i=0; i < dimB; ++i){
+      sizeB_.emplace_back(sizeB[i]);
+      outerSizeB_.emplace_back(outerSizeB[i]);
+   }
+   for(int i=0; i < dimC; ++i){
+      sizeC_.emplace_back(sizeC[i]);
+      outerSizeC_.emplace_back(outerSizeC[i]);
+   }
+   std::vector<tcl::sizeType> offsets;
+
+   tcl::Tensor<double> A( sizeA_, const_cast<double*>(dataA), outerSizeA_, indicesA, offsets);
+   tcl::Tensor<double> B( sizeB_, const_cast<double*>(dataB), outerSizeB_, indicesB, offsets);
+   tcl::Tensor<double> C( sizeC_,                    dataC , outerSizeC_, indicesC, offsets);
+
+   if( tcl::multiply(alpha, &A, &B, beta, &C) != tcl::SUCCESS )
+     printf("[TCL] ERROR: some error occured in multiply()\n"); 
+}
+
+void randomNumaAwareInit(float *data, const long *size, int dim)
+{
+   long totalSize = 1;
+   for(int i = 0; i < dim; i++)
+      totalSize *= size[i];
+#pragma omp parallel for
+   for(int i=0; i < totalSize; ++i)
+      data[i] = (i+1)%1000 - 500;
+
+
+}
+}
+

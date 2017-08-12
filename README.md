@@ -15,15 +15,16 @@ C[i0,j0,j1,i1] = A[i0,k0,i1] * B[j1,k0,j0]; C[i0,j0,j1,i1] = A[k0,i0,k1,i1] * B[
 You can find additional information on tensor contractions in the paper listed
 below.
 
-
 # Requirements
 
-* A C++ compiler with c++11 support (I've tested it with g++ 5.1.0).
+* A C++ compiler with c++11 support (I've tested it with: g++ 5.1.0, icpc 17.0.2).
 * Some BLAS library (e.g., [BLIS](https://github.com/flame/blis), ATLAS, MKL,
   OpenBlas)
 * [HPTT](https://github.com/springer13/hptt) for high-performance tensor transpositions
 
 # Install
+
+## C/C++ library
 
 Install TCL's dependencies (see above). Then clone the repository into a desired directory and change to that location:
 
@@ -33,8 +34,31 @@ Install TCL's dependencies (see above). Then clone the repository into a desired
 
 This should be it and you should see a libtcl.so in the ./lib/ directory.
 
+## Python API
+
+To install the python API you have to:
+
+    cd pythonAPI
+    python setup.py install
+
+At that point you can import the tcl module in your python scripts and call the
+tcl.tensorMult() function (see ./pythonAPI/benchmark/ for examples).
+
+Keep in mind that TCL is a multi-threaded and performance critical library.
+Thus, it is of great importance that you follow the following steps before you
+run your python script:
+
+* Specify the thread affinity (e.g., via environment variable KMP_AFFINITY, via taskset, ...)
+* Specify the amount of threads to be used via the OMP_NUM_THREADS environment
+  variable.
+* Ensure that your python environment links against a multi-threaded BLAS (see
+  numpy.__config__.show())
 
 # Getting started
+
+TCL expects the data in a column-major data layout; thus, indices are stored
+from left to right with the leftmost and rightmost index respectively being
+the fastest-varying (stride-1) index and the slowest-varying index.
 
 You can find an self-explanatory example under ./examples/contraction.cpp
 
@@ -60,6 +84,24 @@ You can find an self-explanatory example under ./examples/contraction.cpp
 You just have to include the header (which can be found in ./include/) and link
 against tcl; an exemplary Makefile can be found in ./examples/Makefile.
 
+## C-Interface
+
+TCL also provides a C interface:
+
+    void sTensorMult(const float alpha, const float *A, const long *sizeA, const long *outerSizeA, const char* indA,
+                                        const float *B, const long *sizeB, const long *outerSizeB, const char* indB,
+                     const float beta ,       float *C, const long *sizeC, const long *outerSizeC, const char* indC);
+
+    void dTensorMult(const double alpha, const double *A, const long *sizeA, const long *outerSizeA, const char* indA,
+                                         const double *B, const long *sizeB, const long *outerSizeB, const char* indB,
+                     const double beta ,       double *C, const long *sizeC, const long *outerSizeC, const char* indC);
+
+The outerSizes enable the user to operate on subtensors; the outerSize may be NULL, in that
+case a dense tensor with size=outerSize is assumed.
+
+## Python-Interface
+
+See ./pythonAPI/benchmark/ for examples
 
 # Key Features
 
@@ -69,6 +111,20 @@ against tcl; an exemplary Makefile can be found in ./examples/Makefile.
 * Support for single- and double-precision. Support for single- and
   double-complex could be added easily.
 
+
+# Performance Results
+
+Here are some preliminary performance (more will be added soon).
+
+* Single-threaded Intel Haswell-EP E5-2680 v3
+
+![hptt](https://github.com/springer13/tcl/blob/master/misc/tcl_1thread.png)
+
+You can run your own benchmarks via:
+
+    ./benchmark/python/benchmark.sh
+
+Notice that the full benchmark may take hours to complete.
 
 # Current limitations
 

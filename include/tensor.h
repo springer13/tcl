@@ -25,7 +25,8 @@
 /// \page pg_tensor Tensor 
 ///
 /// \section sec_tensor Tensor 
-/// A tensor is a symbolic representation of a tensor
+/// A tensor is a symbolic representation of a tensor; it does not own the
+/// corresponding data.
 
 #include <list>
 #include <vector>
@@ -45,7 +46,9 @@
 namespace tcl{
 
    /*!
-    * This class represents a tensor. 
+    * \brief This class represents a tensor; a tensor does _not_ own the data, it
+    * merely interprets the data as a multidimensional-array.
+    *
     * A tensor stores information about its dimensionality, size and a pointer
     * to its data.
     */
@@ -55,13 +58,11 @@ namespace tcl{
    {
       public:
          Tensor( const std::vector<sizeType> &size, 
+                 floatType *data,
                  const std::vector<sizeType> &outerSize = {},
                  const indicesType &indices = {},
-                 const std::vector<sizeType> &offsets = {},
-                 floatType * data = nullptr );
-
-         Tensor( const std::vector<sizeType> &size, 
-                 floatType * data ) : Tensor( size, size, {}, {}, data ) {}
+                 const std::vector<sizeType> &offsets = {}
+               );
 
          Tensor( const Tensor& other ) : _data(other._data), 
                                          _size(other._size),
@@ -69,10 +70,7 @@ namespace tcl{
                                          _indices(other._indices),
                                          _offsets(other._offsets),
                                          _isSubtensor(false) {}
-         ~Tensor() { 
-//            if( (!_isSubtensor) && _data != nullptr)
-//               free(_data);
-         }
+         ~Tensor() { }
 
          /**
           * Return a subtensor that is that is spanned by the indices. For

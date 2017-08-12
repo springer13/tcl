@@ -55,7 +55,7 @@ namespace tcl
       if( j != indices.size() )
          throw std::invalid_argument( "Some indices could not be found." );
 
-      return Tensor<floatType>(subSize, _outerSize, _indices, _offsets, _data);
+      return Tensor<floatType>(subSize, _data, _outerSize, _indices, _offsets);
    }
 
    template<typename floatType>
@@ -114,16 +114,17 @@ namespace tcl
 
    template<typename floatType>
    Tensor<floatType>::Tensor( const std::vector<sizeType> &size, 
+                              floatType *data,
                               const std::vector<sizeType> &outerSize,
                               const indicesType &indices,
-                              const std::vector<sizeType> &offsets,
-                              floatType *data) : 
+                              const std::vector<sizeType> &offsets
+                              ) : 
+                                 _data(data),
                                  _isSubtensor(false),
                                  _size(size),
                                  _outerSize(outerSize),
                                  _indices(indices),
-                                 _offsets(offsets),
-                                 _data(data)
+                                 _offsets(offsets)
    { 
       if( _outerSize.size() == 0 )
          _outerSize = _size;
@@ -149,5 +150,6 @@ namespace tcl
    }
 
    template class Tensor<float>;
+   template class Tensor<double>;
 }
 
