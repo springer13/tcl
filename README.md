@@ -47,7 +47,7 @@ To install the python API you have to:
     python setup.py install
 
 At this point you can import the tcl module in your python scripts and call the
-tcl.tensorMult() function (see ./benchmark/python/ for furhter examples).
+tcl.tensorMult() function (see ./benchmark/python/ for further examples).
 
 Keep in mind that TCL is a multi-threaded and performance critical library.
 Thus, it is of great importance that you follow the following steps before you
@@ -61,7 +61,7 @@ run your python script:
 
 # Getting started
 
-First off, TCL supports anykind of tensor contarctions (i.e., it is not limited
+First off, TCL supports any kind of tensor contractions (i.e., it is not limited
 to tensor contractions that can be mapped to GEMM). The idea behind TCL is that you only 
 have to call a single function for any contraction: tcl::tensorMult(). Once you
 have specified the tensor contraction, TCL will _automatically_ map this tensor
