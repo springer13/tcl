@@ -11,6 +11,8 @@ n = 25
 u = 24
 v = 25
 gflops = a*m*o*n*u*v*2/1e9
+Ma = np.random.rand(2500**2).astype('f')
+Mb = np.random.rand(2500**2).astype('f')
 A = np.empty((u,v,a), order='f', dtype=np.float32)
 B = np.empty((o,m,u,n,v), order='f', dtype=np.float32)
 C = np.empty((a,m,n,o), order='f', dtype=np.float32)
@@ -19,12 +21,18 @@ tcl.randomNumaAwareInit(B)
 tcl.randomNumaAwareInit(C)
 alpha = 1.0
 beta = 0.0
-s = time.time()
-tcl.tensorMult( alpha, A, "u,v,a", B, "o,m,u,n,v", beta, C, "a,m,n,o" )
-timeTCL = time.time() - s
-s = time.time()
-C_ = np.einsum("uva,omunv->amno", A, B)
-timeNP = time.time() - s
+timeTCL = 1e100
+for i in range(5):
+   Mb = Ma *1.1 +  Mb #trash cache
+   s = time.time()
+   tcl.tensorMult( alpha, A, "u,v,a", B, "o,m,u,n,v", beta, C, "a,m,n,o" )
+   timeTCL = min(timeTCL, time.time() - s)
+timeNP = 1e100
+for i in range(5):
+   Mb = Ma *1.1 +  Mb #trash cache
+   s = time.time()
+   C_ = np.einsum("uva,omunv->amno", A, B)
+   timeNP = min(time.time() - s, timeNP)
 print "%.2f GFLOPS %.2f GFLOPS %.2fx"%( gflops/timeTCL, gflops/timeNP, timeNP/ timeTCL)
 #if( not tcl.equal(C, C_) ):
 #    print "validation:" + FAIL + " failed!!!" + ENDC

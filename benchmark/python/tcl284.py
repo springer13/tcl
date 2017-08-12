@@ -14,6 +14,8 @@ u = 12
 w = 12
 v = 8
 gflops = a*c*b*m*o*n*u*w*v*2/1e9
+Ma = np.random.rand(2500**2).astype('f')
+Mb = np.random.rand(2500**2).astype('f')
 A = np.empty((v,u,n,w,o,m), order='f', dtype=np.float32)
 B = np.empty((b,v,c,w,a,u), order='f', dtype=np.float32)
 C = np.empty((n,o,b,a,c,m), order='f', dtype=np.float32)
@@ -22,12 +24,18 @@ tcl.randomNumaAwareInit(B)
 tcl.randomNumaAwareInit(C)
 alpha = 1.0
 beta = 0.0
-s = time.time()
-tcl.tensorMult( alpha, A, "v,u,n,w,o,m", B, "b,v,c,w,a,u", beta, C, "n,o,b,a,c,m" )
-timeTCL = time.time() - s
-s = time.time()
-C_ = np.einsum("vunwom,bvcwau->nobacm", A, B)
-timeNP = time.time() - s
+timeTCL = 1e100
+for i in range(5):
+   Mb = Ma *1.1 +  Mb #trash cache
+   s = time.time()
+   tcl.tensorMult( alpha, A, "v,u,n,w,o,m", B, "b,v,c,w,a,u", beta, C, "n,o,b,a,c,m" )
+   timeTCL = min(timeTCL, time.time() - s)
+timeNP = 1e100
+for i in range(5):
+   Mb = Ma *1.1 +  Mb #trash cache
+   s = time.time()
+   C_ = np.einsum("vunwom,bvcwau->nobacm", A, B)
+   timeNP = min(time.time() - s, timeNP)
 print "%.2f GFLOPS %.2f GFLOPS %.2fx"%( gflops/timeTCL, gflops/timeNP, timeNP/ timeTCL)
 #if( not tcl.equal(C, C_) ):
 #    print "validation:" + FAIL + " failed!!!" + ENDC
