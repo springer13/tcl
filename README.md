@@ -1,6 +1,7 @@
-# Tensor Contraction Library (TCL) for C++
+# Tensor Contraction Library (TCL) for C++ (and Python)
 
-TCL is a C++ library for high-performance tensor contractions.
+TCL is a C++ library for high-performance tensor contractions; TCL also includes
+a wrapper for python and can be easily integrated into native python code.
 
 From a computational perspective, tensors
 can be interpreted as a generalization of matrices to multiple dimensions or simply as
@@ -30,6 +31,10 @@ Install TCL's dependencies (see above). Then clone the repository into a desired
 
     git clone https://github.com/springer13/tcl.git
     cd tcl 
+
+You might have to update the Makefile and specify the location of your BLAS and
+HPTT library, then continue with:
+
     make
 
 This should be it and you should see a libtcl.so in the ./lib/ directory.
@@ -56,6 +61,12 @@ run your python script:
 
 # Getting started
 
+First off, TCL supports anykind of tensor contarctions (i.e., it is not limited
+to tensor contractions that can be mapped to GEMM). The idea behind TCL is that you only 
+have to call a single function for any contraction: tcl::tensorMult(). Once you
+have specified the tensor contraction, TCL will _automatically_ map this tensor
+contraction to the most efficient kernel.
+
 TCL expects the data in a column-major data layout; thus, indices are stored
 from left to right with the leftmost and rightmost index respectively being
 the fastest-varying (stride-1) index and the slowest-varying index.
@@ -78,7 +89,7 @@ You can find an self-explanatory example under ./examples/contraction.cpp
     // Data initialization (omitted) ...
 
     // tensor contarction: C_{m,n} = alpha * A_{k2,m,k1} * B_{n,k2,k1} + beta * C_{m,n}
-    auto ret = tcl::multiply<float>( alpha, A["k2,m,k1"], B["n,k2,k1"], beta, C["m,n"], 0 );
+    auto ret = tcl::tensorMult<float>( alpha, A["k2,m,k1"], B["n,k2,k1"], beta, C["m,n"], 0 );
 
 
 You just have to include the header (which can be found in ./include/) and link
