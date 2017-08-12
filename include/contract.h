@@ -38,7 +38,7 @@
 namespace tcl{
 
    template<typename floatType>
-   error multiply(const floatType alpha, const Tensor<floatType> *A,
+   error tensorMult(const floatType alpha, const Tensor<floatType> *A,
                                          const Tensor<floatType> *B, 
                   const floatType beta,        Tensor<floatType> *C, int useTTGT = 1);
 }

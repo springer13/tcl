@@ -1009,7 +1009,7 @@ namespace tcl
 
 
    template<typename floatType>
-   error multiply(const floatType alpha, const Tensor<floatType> *A,
+   error tensorMult(const floatType alpha, const Tensor<floatType> *A,
                                          const Tensor<floatType> *B, 
                   const floatType beta,        Tensor<floatType> *C, int useTTGT) 
    {
@@ -1076,7 +1076,7 @@ namespace tcl
 
    template error contractTTGT<float>(const float alpha, const Tensor<float> *A, const Tensor<float> *B,  const float beta, Tensor<float> *C);
 
-   template error multiply<float>(const float alpha, const Tensor<float> *A, const Tensor<float> *B, 
+   template error tensorMult<float>(const float alpha, const Tensor<float> *A, const Tensor<float> *B, 
                                   const float beta,        Tensor<float> *C, int useTTGT);
 }
 
@@ -1114,8 +1114,8 @@ void sTensorMult(const float alpha, const float *dataA, const long *sizeA, const
    tcl::Tensor<float> B( sizeB_, const_cast<float*>(dataB), outerSizeB_, indicesB, offsets);
    tcl::Tensor<float> C( sizeC_,                    dataC , outerSizeC_, indicesC, offsets);
 
-   if( tcl::multiply(alpha, &A, &B, beta, &C) != tcl::SUCCESS )
-     printf("[TCL] ERROR: some error occured in multiply()\n"); 
+   if( tcl::tensorMult(alpha, &A, &B, beta, &C) != tcl::SUCCESS )
+     printf("[TCL] ERROR: some error occured in tensorMult()\n"); 
 }
 
 void dTensorMult(const double alpha, const double *dataA, const long *sizeA, const long *outerSizeA, const char* indA,
@@ -1150,8 +1150,8 @@ void dTensorMult(const double alpha, const double *dataA, const long *sizeA, con
    tcl::Tensor<double> B( sizeB_, const_cast<double*>(dataB), outerSizeB_, indicesB, offsets);
    tcl::Tensor<double> C( sizeC_,                    dataC , outerSizeC_, indicesC, offsets);
 
-   if( tcl::multiply(alpha, &A, &B, beta, &C) != tcl::SUCCESS )
-     printf("[TCL] ERROR: some error occured in multiply()\n"); 
+   if( tcl::tensorMult(alpha, &A, &B, beta, &C) != tcl::SUCCESS )
+     printf("[TCL] ERROR: some error occured in tensorMult()\n"); 
 }
 
 void randomNumaAwareInit(float *data, const long *size, int dim)
