@@ -1016,40 +1016,69 @@ namespace tcl
 #ifdef TIMERS
       auto start = omp_get_wtime();
 #endif
+      auto indicesA = A->getIndices();
+      auto indicesB = B->getIndices();
+      auto indicesC = C->getIndices();
+
       // error checking
-      if( A->getDim() <= 0 || A->getDim() != A->getIndices().size() )
+      if( A->getDim() <= 0 || A->getDim() != indicesA.size() )
          return INVALID_PARAMETER_2;
-      if( B->getDim() <= 0 || B->getDim() != B->getIndices().size() )
+      if( B->getDim() <= 0 || B->getDim() != indicesB.size() )
          return INVALID_PARAMETER_4;
-      if( C->getDim() <= 0 || C->getDim() != C->getIndices().size() )
+      if( C->getDim() <= 0 || C->getDim() != indicesC.size() )
          return INVALID_PARAMETER_7;
 
       // TODO merge indices
       
       // check for duplicates
-      for(auto it = A->getIndices().begin(); it != A->getIndices().end(); it++)
-         for(auto itt = std::next(it); itt != A->getIndices().end(); itt++)
+      for(auto it = indicesA.begin(); it != indicesA.end(); it++)
+         for(auto itt = std::next(it); itt != indicesA.end(); itt++)
             if( *it == *itt )
                return INVALID_PARAMETER_2;
-      for(auto it = B->getIndices().begin(); it != B->getIndices().end(); it++)
-         for(auto itt = std::next(it); itt != B->getIndices().end(); itt++)
+      for(auto it = indicesB.begin(); it != indicesB.end(); it++)
+         for(auto itt = std::next(it); itt != indicesB.end(); itt++)
             if( *it == *itt )
                return INVALID_PARAMETER_4;
-      for(auto it = C->getIndices().begin(); it != C->getIndices().end(); it++)
-         for(auto itt = std::next(it); itt != C->getIndices().end(); itt++)
+      for(auto it = indicesC.begin(); it != indicesC.end(); it++)
+         for(auto itt = std::next(it); itt != indicesC.end(); itt++)
             if( *it == *itt )
                return INVALID_PARAMETER_7;
 
+      // check for correct sizes
+      {
+         int i = 0;
+         for(auto it = indicesC.begin(); it != indicesC.end(); it++, i++){
+            int j = 0;
+            for(auto itt = indicesA.begin(); itt != indicesA.end(); itt++, j++)
+               if( *it == *itt && A->getSize()[j] != C->getSize()[i] )
+                  return INVALID_TENSOR_SIZE;
+         }
+         i = 0;
+         for(auto it = indicesC.begin(); it != indicesC.end(); it++, i++){
+            int j = 0;
+            for(auto itt = indicesB.begin(); itt != indicesB.end(); itt++, j++)
+               if( *it == *itt && B->getSize()[j] != C->getSize()[i] )
+                  return INVALID_TENSOR_SIZE;
+         }
+         i = 0;
+         for(auto it = indicesB.begin(); it != indicesB.end(); it++, i++){
+            int j = 0;
+            for(auto itt = indicesA.begin(); itt != indicesA.end(); itt++, j++)
+               if( *it == *itt && A->getSize()[j] != B->getSize()[i] )
+                  return INVALID_TENSOR_SIZE;
+         }
+      }
+
       // swap A and B if the stride-1 index of C appears in B
-      if( find(C->getIndices().front(), B->getIndices()) )
+      if( find(indicesC.front(), indicesB) )
          std::swap(A, B);
 
       
 //      // detect indices that appear in all tensors
-//      auto loopIndices = intersect(intersect(A->getIndices(), B->getIndices()), C->getIndices());
-//      auto indicesA = setMinus(A->getIndices(), loopIndices);
-//      auto indicesB = setMinus(B->getIndices(), loopIndices);
-//      auto indicesC = setMinus(C->getIndices(), loopIndices);
+//      auto loopIndices = intersect(intersect(indicesA, indicesB), indicesC);
+//      auto indicesA = setMinus(indicesA, loopIndices);
+//      auto indicesB = setMinus(indicesB, loopIndices);
+//      auto indicesC = setMinus(indicesC, loopIndices);
 //
 //      auto subA = A->getSubTensor(indicesA);
 //      auto subB = B->getSubTensor(indicesB);

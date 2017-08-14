@@ -27,6 +27,34 @@
 namespace tcl
 { 
 
+   char* getErrorString( error err ){
+      switch (err){
+         case SUCCESS:
+            return "SUCCESS";
+         case INVALID_PARAMETER_0:
+            return "Parameter 0 is invalid.";
+         case INVALID_PARAMETER_1:
+            return "Parameter 1 is invalid.";
+         case INVALID_PARAMETER_2:
+            return "Parameter 2 is invalid.";
+         case INVALID_PARAMETER_3:
+            return "Parameter 3 is invalid.";
+         case INVALID_PARAMETER_4:
+            return "Parameter 4 is invalid.";
+         case INVALID_PARAMETER_5:
+            return "Parameter 5 is invalid.";
+         case INVALID_PARAMETER_6:
+            return "Parameter 6 is invalid.";
+         case INVALID_PARAMETER_7:
+            return "Parameter 7 is invalid.";
+         case INVALID_TENSOR_SIZE:
+            return "Tensor size invalid. Mismatch between the sizes of two indices.";
+         case INTERNAL_ERROR:
+            return "Internal error.";
+         default:
+            return "Unkown error.";
+      }
+   }
    int getNumThreads(){
       auto tmp = std::getenv("OMP_NUM_THREADS");
       if( tmp ) 

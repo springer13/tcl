@@ -139,7 +139,7 @@ namespace tcl
 
 
    template<typename floatType>
-   void Tensor<floatType>::print()
+   void Tensor<floatType>::print() const
    {
       std::cout<< "---------------------\n";
       printVector(_indices, "Indices");

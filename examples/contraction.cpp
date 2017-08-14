@@ -53,7 +53,11 @@ int main(int argc, char** argv)
    float beta = 4;
 
    // tensor contarction: C_{m,n} = alpha * A_{k2,m,k1} * B_{n,k2,k1} + beta * C_{m,n}
-   auto ret = tcl::tensorMult<float>( alpha, A["k2,m,k1"], B["n,k2,k1"], beta, C["m,n"] );
+   auto err = tcl::tensorMult<float>( alpha, A["k2,m,k1"], B["n,k2,k1"], beta, C["m,n"] );
+   if( err != tcl::SUCCESS ){
+      printf("ERROR: %s\n", tcl::getErrorString(err));
+      exit(-1);
+   }
 
    for(int i=0; i < m; ++i){
       for(int j=0; j < n; ++j)

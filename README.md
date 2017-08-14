@@ -57,7 +57,7 @@ run your python script:
 * Specify the amount of threads to be used via the OMP_NUM_THREADS environment
   variable.
 * Ensure that your python environment links against a multi-threaded BLAS (see
-  numpy.__config__.show())
+  numpy.\_\_config\_\_.show())
 
 # Getting started
 
@@ -131,9 +131,13 @@ Here are some preliminary performance (more will be added soon).
 
 ![hptt](https://github.com/springer13/tcl/blob/master/misc/tcl_1thread.png)
 
+* Multi-threaded 2x Intel Haswell-EP E5-2680 v3 (24 threads)
+
+![hptt](https://github.com/springer13/tcl/blob/master/misc/tcl_24thread.png)
+
 You can run your own benchmarks via:
 
-    ./benchmark/python/benchmark.sh
+    ./benchmark/python/benchmark.sh <numThreads>
 
 Notice that the full benchmark may take hours to complete.
 

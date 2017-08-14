@@ -44,6 +44,8 @@ extern "C"
 namespace tcl
 {
 
+   char* getErrorString( error err );
+
    /**
     * concatinates the two vectors a and b and stores the result into c
     */

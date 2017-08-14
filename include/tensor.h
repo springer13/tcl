@@ -129,7 +129,7 @@ namespace tcl{
             return this;
          }
 
-         void print();
+         void print() const;
 
       private:
          Tensor() {};
