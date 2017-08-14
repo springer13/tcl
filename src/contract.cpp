@@ -493,13 +493,34 @@ namespace tcl
 #ifdef TIMERS
       auto start = omp_get_wtime();
 #endif
-      auto loopIndices = intersect(A->getIndices(), intersect(B->getIndices(), C->getIndices()));
+      
+      auto indicesA = A->getIndices();
+      auto indicesB = B->getIndices();
+      auto indicesC = C->getIndices(); 
+
+      auto loopIndices = intersect(indicesA, intersect(indicesB, indicesC));
       //! also known as the free indices of A 
-      auto mIndices = setMinus(intersect(A->getIndices(), C->getIndices()), loopIndices);
+      auto mIndices = setMinus(intersect(indicesA, indicesC), loopIndices);
       //! also known as the free indices of B
-      auto nIndices = setMinus(intersect(B->getIndices(), C->getIndices()), loopIndices);
+      auto nIndices = setMinus(intersect(indicesB, indicesC), loopIndices);
       //! also known as the contracted indices 
-      auto kIndices = setMinus(intersect(A->getIndices(), B->getIndices()), loopIndices);
+      auto kIndices = setMinus(intersect(indicesA, indicesB), loopIndices);
+
+      if( loopIndices.size() > 0 ){
+         printVector(loopIndices, "loop indices");
+         printf("inidices that appear in all tensors are not yet supported.\n");
+         auto subA = A->getSubTensor(setMinus(indicesA, loopIndices));
+         auto subB = B->getSubTensor(setMinus(indicesB, loopIndices));
+         auto subC = C->getSubTensor(setMinus(indicesC, loopIndices));
+         subA.print();
+         subB.print();
+         subC.print();
+         return INTERNAL_ERROR;
+      }
+
+      if( mIndices.size() <= 0 || nIndices.size() <= 0 || kIndices.size() <= 0 ) // TTGT is not applicable; use fallback
+         return contract(alpha, A, B, beta, C);
+
 #ifdef TIMERS
       auto indexTime = omp_get_wtime() - start;
       printf("TCL index: %f\n",indexTime);
@@ -515,9 +536,9 @@ namespace tcl
       sizeType totalSizeB = B->getTotalSize() * sizeof(floatType);
       sizeType totalSizeC = C->getTotalSize() * sizeof(floatType);
       TTGTCandidate candidate;
-      getBestTTGTCandidate(A->getIndices(), totalSizeA, 
-                                            B->getIndices(), totalSizeB,
-                                            C->getIndices(), totalSizeC,
+      getBestTTGTCandidate(indicesA, totalSizeA, 
+                                            indicesB, totalSizeB,
+                                            indicesC, totalSizeC,
                                             loopIndices, mIndices, nIndices, kIndices,
                                             candidate);
 #ifdef TIMERS
@@ -532,9 +553,9 @@ namespace tcl
       /*********************
        * Request auxiliary memory form the memory broker
        *********************/
-      auto permA = getPermutation(A->getIndices(), candidate.indicesA);
-      auto permB = getPermutation(B->getIndices(), candidate.indicesB);
-      auto permC = getPermutation(candidate.indicesC, C->getIndices());
+      auto permA = getPermutation(indicesA, candidate.indicesA);
+      auto permB = getPermutation(indicesB, candidate.indicesB);
+      auto permC = getPermutation(candidate.indicesC, indicesC);
 
       sizeType requestedSize = 0;
       if( !isIdentity(permA) )
@@ -690,7 +711,7 @@ namespace tcl
       start = omp_get_wtime();
 #endif
       if( !isIdentity(permC) ) {
-         auto invPermC = getPermutation(C->getIndices(), candidate.indicesC);
+         auto invPermC = getPermutation(indicesC, candidate.indicesC);
          auto sizeC = permute(invPermC, C->getSize());
 #ifdef DEBUG
          printVector(C->getSize(), "sizeC out");
@@ -1011,7 +1032,7 @@ namespace tcl
    template<typename floatType>
    error tensorMult(const floatType alpha, const Tensor<floatType> *A,
                                          const Tensor<floatType> *B, 
-                  const floatType beta,        Tensor<floatType> *C, int useTTGT) 
+                  const floatType beta,        Tensor<floatType> *C) 
    {
 #ifdef TIMERS
       auto start = omp_get_wtime();
@@ -1073,32 +1094,7 @@ namespace tcl
       if( find(indicesC.front(), indicesB) )
          std::swap(A, B);
 
-      
-//      // detect indices that appear in all tensors
-//      auto loopIndices = intersect(intersect(indicesA, indicesB), indicesC);
-//      auto indicesA = setMinus(indicesA, loopIndices);
-//      auto indicesB = setMinus(indicesB, loopIndices);
-//      auto indicesC = setMinus(indicesC, loopIndices);
-//
-//      auto subA = A->getSubTensor(indicesA);
-//      auto subB = B->getSubTensor(indicesB);
-//      auto subC = C->getSubTensor(indicesC);
-#ifdef TIMERS
-      auto gemmTime = omp_get_wtime() - start;
-      printf("TCL dummy: %f\n", gemmTime);
-#endif
-
-      // TODO loop over loop indices
-
-      if( useTTGT )
-         contractTTGT(alpha, A, B, beta, C);
-      else
-         contract(alpha, A, B, beta, C);
-#ifdef TIMERS
-      auto x = omp_get_wtime() - start;
-      printf("TCL x: %f\n", x);
-#endif
-      return SUCCESS;
+      return contractTTGT(alpha, A, B, beta, C);
    }; 
 
    template error contract<float>(const float alpha, const Tensor<float> *A, const Tensor<float> *B,  const float beta, Tensor<float> *C);
@@ -1106,7 +1102,14 @@ namespace tcl
    template error contractTTGT<float>(const float alpha, const Tensor<float> *A, const Tensor<float> *B,  const float beta, Tensor<float> *C);
 
    template error tensorMult<float>(const float alpha, const Tensor<float> *A, const Tensor<float> *B, 
-                                  const float beta,        Tensor<float> *C, int useTTGT);
+                                    const float beta,        Tensor<float> *C);
+
+   template error contract<double>(const double alpha, const Tensor<double> *A, const Tensor<double> *B,  const double beta, Tensor<double> *C);
+
+   template error contractTTGT<double>(const double alpha, const Tensor<double> *A, const Tensor<double> *B,  const double beta, Tensor<double> *C);
+
+   template error tensorMult<double>(const double alpha, const Tensor<double> *A, const Tensor<double> *B, 
+                                    const double beta,        Tensor<double> *C);
 }
 
 extern "C"

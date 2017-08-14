@@ -39,8 +39,8 @@ namespace tcl{
 
    template<typename floatType>
    error tensorMult(const floatType alpha, const Tensor<floatType> *A,
-                                         const Tensor<floatType> *B, 
-                  const floatType beta,        Tensor<floatType> *C, int useTTGT = 1);
+                                           const Tensor<floatType> *B, 
+                    const floatType beta,        Tensor<floatType> *C);
 }
 
 extern "C"{
