@@ -58,7 +58,7 @@ namespace tcl{
    {
       public:
 
-         Tensor() : data(nullptr) {};
+         Tensor() : _data(nullptr) {};
 
          Tensor( const std::vector<sizeType> &size, 
                  floatType *data,

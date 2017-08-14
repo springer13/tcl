@@ -72,6 +72,13 @@ namespace tcl
             mIndicesContiguousA && kIndicesContiguousA &&
             kIndicesContiguousB && nIndicesContiguousB;
       }
+
+      void print(){
+         printf("TransA: %d TransB: %d TransC: %d\n", transA, transB, interchangeAB);
+         printVector(indicesA, "Indices A");
+         printVector(indicesB, "Indices B");
+         printVector(indicesC, "Indices C");
+      }
    };
 
    double getTTGTCandidateCost(const indicesType &indicesA, const sizeType totalSizeA, 
@@ -182,9 +189,15 @@ namespace tcl
                   concatinate_helper(nIndices, indicesB, mIndices, indicesA, loopIndices, newIndicesC);
          }
       }
+      if( not transAreq )
+         newIndicesA = indicesA;
+      if( not transBreq )
+         newIndicesB = indicesB;
+      if( not transCreq )
+         newIndicesC = indicesC;
    }
 
-   static void helperTranspose(const indicesType& aIndices, const indicesType& bIndices, const indicesType& indicesT,
+   static void helperTranspose(const indicesType& loopIndices, const indicesType& aIndices, const indicesType& bIndices, const indicesType& indicesT,
         bool &trans, indicesType& indices )
    {
       if( aIndices.front() == indicesT.front() ) {
@@ -194,11 +207,14 @@ namespace tcl
          trans = true;
          concatinate(bIndices, aIndices, indices);
       }
+      for(auto x : loopIndices)
+         indices.emplace_back(x);
    }
 
    void getBestTTGTCandidate(const indicesType &indicesA, const sizeType totalSizeA, 
                                       const indicesType &indicesB, const sizeType totalSizeB,
                                       const indicesType &indicesC, const sizeType totalSizeC,
+                                      const indicesType &loopIndices,
                                       const indicesType &mIndices,
                                       const indicesType &nIndices,
                                       const indicesType &kIndices,
@@ -229,37 +245,37 @@ namespace tcl
                //all tensors need to be transposed
                if( totalSizeA >= totalSizeB && totalSizeA >= totalSizeC ){
                   // transpose A
-                  helperTranspose(mIndicesA, kIndicesA, indicesA, candidate.transA, candidate.indicesA);
+                  helperTranspose(loopIndices,mIndicesA, kIndicesA, indicesA, candidate.transA, candidate.indicesA);
                   // transpose C
-                  helperTranspose(mIndicesA, nIndicesC, indicesC, candidate.interchangeAB, candidate.indicesC);
+                  helperTranspose(loopIndices,mIndicesA, nIndicesC, indicesC, candidate.interchangeAB, candidate.indicesC);
                   // transpose B
-                  helperTranspose(kIndicesA, nIndicesC, indicesB, candidate.transB, candidate.indicesB);
+                  helperTranspose(loopIndices,kIndicesA, nIndicesC, indicesB, candidate.transB, candidate.indicesB);
                } else if( totalSizeC >= totalSizeB && totalSizeC >= totalSizeA ){
                   // transpose C
-                  helperTranspose(mIndicesC, nIndicesC, indicesC, candidate.interchangeAB, candidate.indicesC);
+                  helperTranspose(loopIndices,mIndicesC, nIndicesC, indicesC, candidate.interchangeAB, candidate.indicesC);
                   // transpose A
-                  helperTranspose(mIndicesC, kIndicesA, indicesA, candidate.transA, candidate.indicesA);
+                  helperTranspose(loopIndices,mIndicesC, kIndicesA, indicesA, candidate.transA, candidate.indicesA);
                   // transpose B
-                  helperTranspose(kIndicesA, nIndicesC, indicesB, candidate.transB, candidate.indicesB);
+                  helperTranspose(loopIndices,kIndicesA, nIndicesC, indicesB, candidate.transB, candidate.indicesB);
                } else if( totalSizeB >= totalSizeA && totalSizeB >= totalSizeC ){
                   // transpose B
-                  helperTranspose(kIndicesB, nIndicesB, indicesB, candidate.transB, candidate.indicesB);
+                  helperTranspose(loopIndices,kIndicesB, nIndicesB, indicesB, candidate.transB, candidate.indicesB);
                   // transpose C
-                  helperTranspose(mIndicesC, nIndicesB, indicesC, candidate.interchangeAB, candidate.indicesC);
+                  helperTranspose(loopIndices,mIndicesC, nIndicesB, indicesC, candidate.interchangeAB, candidate.indicesC);
                   // transpose A
-                  helperTranspose(mIndicesC, kIndicesB, indicesA, candidate.transA, candidate.indicesA);
+                  helperTranspose(loopIndices,mIndicesC, kIndicesB, indicesA, candidate.transA, candidate.indicesA);
                }
             }else{
                if( totalSizeB > totalSizeA ){
                   // transpose B
-                  helperTranspose(kIndicesB, nIndicesC, indicesB, candidate.transB, candidate.indicesB);
+                  helperTranspose(loopIndices,kIndicesB, nIndicesC, indicesB, candidate.transB, candidate.indicesB);
                   // transpose A
-                  helperTranspose(mIndicesC, kIndicesB, indicesA, candidate.transA, candidate.indicesA);
+                  helperTranspose(loopIndices,mIndicesC, kIndicesB, indicesA, candidate.transA, candidate.indicesA);
                }else{
                   // transpose A
-                  helperTranspose(mIndicesC, kIndicesA, indicesA, candidate.transA, candidate.indicesA);
+                  helperTranspose(loopIndices,mIndicesC, kIndicesA, indicesA, candidate.transA, candidate.indicesA);
                   // transpose B
-                  helperTranspose(kIndicesA, nIndicesC, indicesB, candidate.transB, candidate.indicesB);
+                  helperTranspose(loopIndices,kIndicesA, nIndicesC, indicesB, candidate.transB, candidate.indicesB);
                }
                //dont transpose C
                candidate.indicesC = indicesC;
@@ -269,14 +285,14 @@ namespace tcl
             if( transposeRequiredC ){
                if( totalSizeC > totalSizeB ){
                   // transpose C
-                  helperTranspose(mIndicesA, nIndicesC, indicesC, candidate.interchangeAB, candidate.indicesC);
+                  helperTranspose(loopIndices,mIndicesA, nIndicesC, indicesC, candidate.interchangeAB, candidate.indicesC);
                   // transpose B
-                  helperTranspose(kIndicesA, nIndicesC, indicesB, candidate.transB, candidate.indicesB);
+                  helperTranspose(loopIndices,kIndicesA, nIndicesC, indicesB, candidate.transB, candidate.indicesB);
                }else{
                   // transpose B
-                  helperTranspose(kIndicesA, nIndicesB, indicesB, candidate.transB, candidate.indicesB);
+                  helperTranspose(loopIndices,kIndicesA, nIndicesB, indicesB, candidate.transB, candidate.indicesB);
                   // transpose C
-                  helperTranspose(mIndicesA, nIndicesB, indicesC, candidate.interchangeAB, candidate.indicesC);
+                  helperTranspose(loopIndices,mIndicesA, nIndicesB, indicesC, candidate.interchangeAB, candidate.indicesC);
                }
                //dont transpose A
                candidate.indicesA = indicesA;
@@ -289,13 +305,13 @@ namespace tcl
                      candidate.indicesA = indicesA;
                      candidate.transA = kIndicesA.front() == indicesA.front();
                      // transpose C
-                     helperTranspose(mIndicesA, nIndicesC, indicesC, candidate.interchangeAB, candidate.indicesC);
+                     helperTranspose(loopIndices,mIndicesA, nIndicesC, indicesC, candidate.interchangeAB, candidate.indicesC);
                   }else{
                      //dont transpose C
                      candidate.indicesC = indicesC;
                      candidate.interchangeAB = nIndicesC.front() == indicesC.front();
                      // transpose A
-                     helperTranspose(mIndicesC, kIndicesA, indicesA, candidate.transA, candidate.indicesA);
+                     helperTranspose(loopIndices,mIndicesC, kIndicesA, indicesA, candidate.transA, candidate.indicesA);
                   }
                }else{
                   //dont transpose A
@@ -306,7 +322,7 @@ namespace tcl
                   candidate.interchangeAB = nIndicesC.front() == indicesC.front();
                }
                // transpose B
-               helperTranspose(kIndicesA, nIndicesC, indicesB, candidate.transB, candidate.indicesB);
+               helperTranspose(loopIndices,kIndicesA, nIndicesC, indicesB, candidate.transB, candidate.indicesB);
             }
          } 
       }else{
@@ -314,14 +330,14 @@ namespace tcl
             if( transposeRequiredC ){
                if( totalSizeC > totalSizeA ){
                   // transpose C
-                  helperTranspose(mIndicesC, nIndicesB, indicesC, candidate.interchangeAB, candidate.indicesC);
+                  helperTranspose(loopIndices,mIndicesC, nIndicesB, indicesC, candidate.interchangeAB, candidate.indicesC);
                   // transpose A
-                  helperTranspose(mIndicesC, kIndicesB, indicesA, candidate.transA, candidate.indicesA);
+                  helperTranspose(loopIndices,mIndicesC, kIndicesB, indicesA, candidate.transA, candidate.indicesA);
                }else{
                   // transpose A
-                  helperTranspose(mIndicesA, kIndicesB, indicesA, candidate.transA, candidate.indicesA);
+                  helperTranspose(loopIndices,mIndicesA, kIndicesB, indicesA, candidate.transA, candidate.indicesA);
                   // transpose C
-                  helperTranspose(mIndicesA, nIndicesB, indicesC, candidate.interchangeAB, candidate.indicesC);
+                  helperTranspose(loopIndices,mIndicesA, nIndicesB, indicesC, candidate.interchangeAB, candidate.indicesC);
                }
                //dont transpose B
                candidate.indicesB = indicesB;
@@ -334,13 +350,13 @@ namespace tcl
                      candidate.indicesB = indicesB;
                      candidate.transB = nIndicesB.front() == indicesB.front();
                      // transpose C
-                     helperTranspose(mIndicesC, nIndicesB, indicesC, candidate.interchangeAB, candidate.indicesC);
+                     helperTranspose(loopIndices,mIndicesC, nIndicesB, indicesC, candidate.interchangeAB, candidate.indicesC);
                   }else{
                      //dont transpose C
                      candidate.indicesC = indicesC;
                      candidate.interchangeAB = nIndicesC.front() == indicesC.front();
                      // transpose B
-                     helperTranspose(kIndicesB, nIndicesC, indicesB, candidate.transB, candidate.indicesB);
+                     helperTranspose(loopIndices,kIndicesB, nIndicesC, indicesB, candidate.transB, candidate.indicesB);
                   }
                }else{
                   //dont transpose B
@@ -351,7 +367,7 @@ namespace tcl
                   candidate.interchangeAB = nIndicesC.front() == indicesC.front();
                }
                // transpose A
-               helperTranspose(mIndicesC, kIndicesB, indicesA, candidate.transA, candidate.indicesA);
+               helperTranspose(loopIndices,mIndicesC, kIndicesB, indicesA, candidate.transA, candidate.indicesA);
             }
          }else{ 
             if( transposeRequiredC ){ //not a, not b, c
@@ -362,13 +378,13 @@ namespace tcl
                      candidate.indicesA = indicesA;
                      candidate.transA = kIndicesA.front() == indicesA.front();
                      // transpose B
-                     helperTranspose(kIndicesA, nIndicesB, indicesB, candidate.transB, candidate.indicesB);
+                     helperTranspose(loopIndices,kIndicesA, nIndicesB, indicesB, candidate.transB, candidate.indicesB);
                   }else{
                      //dont transpose B
                      candidate.indicesB = indicesB;
                      candidate.transB = nIndicesB.front() == indicesB.front();
                      // transpose A
-                     helperTranspose(mIndicesA, kIndicesB, indicesA, candidate.transA, candidate.indicesA);
+                     helperTranspose(loopIndices,mIndicesA, kIndicesB, indicesA, candidate.transA, candidate.indicesA);
                   }
                }else{
                   //dont transpose A
@@ -379,7 +395,7 @@ namespace tcl
                   candidate.transB = nIndicesB.front() == indicesB.front();
                }
                // transpose C
-               helperTranspose(mIndicesA, nIndicesB, indicesC, candidate.interchangeAB, candidate.indicesC);
+               helperTranspose(loopIndices,mIndicesA, nIndicesB, indicesC, candidate.interchangeAB, candidate.indicesC);
             }else{
                if( kIndicesA != kIndicesB ){
                   // transpose A or B
@@ -393,30 +409,30 @@ namespace tcl
                            candidate.indicesA = indicesA;
                            candidate.transA = kIndicesA.front() == indicesA.front();
                            // transpose B
-                           helperTranspose(kIndicesA, nIndicesB, indicesB, candidate.transB, candidate.indicesB);
+                           helperTranspose(loopIndices,kIndicesA, nIndicesB, indicesB, candidate.transB, candidate.indicesB);
                            // transpose C
-                           helperTranspose(mIndicesA, nIndicesB, indicesC, candidate.interchangeAB, candidate.indicesC);
+                           helperTranspose(loopIndices,mIndicesA, nIndicesB, indicesC, candidate.interchangeAB, candidate.indicesC);
                         }else if( totalSizeC >= totalSizeB && totalSizeC >= totalSizeA ){
                            //dont transpose C
                            candidate.indicesC = indicesC;
                            candidate.interchangeAB = nIndicesC.front() == indicesC.front();
                            // transpose B
-                           helperTranspose(kIndicesB, nIndicesC, indicesB, candidate.transB, candidate.indicesB);
+                           helperTranspose(loopIndices,kIndicesB, nIndicesC, indicesB, candidate.transB, candidate.indicesB);
                            // transpose A
-                           helperTranspose(mIndicesC, kIndicesB, indicesA, candidate.transA, candidate.indicesA);
+                           helperTranspose(loopIndices,mIndicesC, kIndicesB, indicesA, candidate.transA, candidate.indicesA);
                         }else{
                            //dont transpose B
                            candidate.indicesB = indicesB;
                            candidate.transB = nIndicesB.front() == indicesB.front();
                            // transpose A
-                           helperTranspose(mIndicesA, kIndicesB, indicesA, candidate.transA, candidate.indicesA);
+                           helperTranspose(loopIndices,mIndicesA, kIndicesB, indicesA, candidate.transA, candidate.indicesA);
                            // transpose C
-                           helperTranspose(mIndicesA, nIndicesB, indicesC, candidate.interchangeAB, candidate.indicesC);
+                           helperTranspose(loopIndices,mIndicesA, nIndicesB, indicesC, candidate.interchangeAB, candidate.indicesC);
                         }
                      }else{ // A only is possible
                         if( totalSizeA <= totalSizeB + totalSizeC ){
                            // transpose A
-                           helperTranspose(mIndicesC, kIndicesB, indicesA, candidate.transA, candidate.indicesA);
+                           helperTranspose(loopIndices,mIndicesC, kIndicesB, indicesA, candidate.transA, candidate.indicesA);
                            //dont transpose B
                            candidate.indicesB = indicesB;
                            candidate.transB = nIndicesB.front() == indicesB.front();
@@ -428,9 +444,9 @@ namespace tcl
                            candidate.indicesA = indicesA;
                            candidate.transA = kIndicesA.front() == indicesA.front();
                            // transpose B
-                           helperTranspose(kIndicesA, nIndicesB, indicesB, candidate.transB, candidate.indicesB);
+                           helperTranspose(loopIndices,kIndicesA, nIndicesB, indicesB, candidate.transB, candidate.indicesB);
                            // transpose C
-                           helperTranspose(mIndicesA, nIndicesB, indicesC, candidate.interchangeAB, candidate.indicesC);
+                           helperTranspose(loopIndices,mIndicesA, nIndicesB, indicesC, candidate.interchangeAB, candidate.indicesC);
                         }
                      }
                   }else{
@@ -445,15 +461,15 @@ namespace tcl
                            candidate.indicesC = indicesC;
                            candidate.interchangeAB = nIndicesC.front() == indicesC.front();
                            // transpose B
-                           helperTranspose(kIndicesA, nIndicesC, indicesB, candidate.transB, candidate.indicesB);
+                           helperTranspose(loopIndices,kIndicesA, nIndicesC, indicesB, candidate.transB, candidate.indicesB);
                         }else{
                            //dont transpose B
                            candidate.indicesB = indicesB;
                            candidate.transB = nIndicesB.front() == indicesB.front();
                            // transpose C
-                           helperTranspose(mIndicesC, nIndicesB, indicesC, candidate.interchangeAB, candidate.indicesC);
+                           helperTranspose(loopIndices,mIndicesC, nIndicesB, indicesC, candidate.interchangeAB, candidate.indicesC);
                            // transpose A
-                           helperTranspose(mIndicesC, kIndicesB, indicesA, candidate.transA, candidate.indicesA);
+                           helperTranspose(loopIndices,mIndicesC, kIndicesB, indicesA, candidate.transA, candidate.indicesA);
                         }
                      }else{
                         // transpose A or B
@@ -465,7 +481,7 @@ namespace tcl
                            candidate.indicesC = indicesC;
                            candidate.interchangeAB = nIndicesC.front() == indicesC.front();
                            // transpose B
-                           helperTranspose(kIndicesA, nIndicesC, indicesB, candidate.transB, candidate.indicesB);
+                           helperTranspose(loopIndices,kIndicesA, nIndicesC, indicesB, candidate.transB, candidate.indicesB);
                         }else{
                            //dont transpose B
                            candidate.indicesB = indicesB;
@@ -474,7 +490,7 @@ namespace tcl
                            candidate.indicesC = indicesC;
                            candidate.interchangeAB = nIndicesC.front() == indicesC.front();
                            // transpose A
-                           helperTranspose(mIndicesC, kIndicesB, indicesA, candidate.transA, candidate.indicesA);
+                           helperTranspose(loopIndices,mIndicesC, kIndicesB, indicesA, candidate.transA, candidate.indicesA);
                         }
                      }
                   }
@@ -491,15 +507,15 @@ namespace tcl
                            candidate.indicesB = indicesB;
                            candidate.transB = nIndicesB.front() == indicesB.front();
                            // transpose C
-                           helperTranspose(mIndicesA, nIndicesB, indicesC, candidate.interchangeAB, candidate.indicesC);
+                           helperTranspose(loopIndices,mIndicesA, nIndicesB, indicesC, candidate.interchangeAB, candidate.indicesC);
                         }else{
                            //dont transpose C
                            candidate.indicesC = indicesC;
                            candidate.interchangeAB = nIndicesC.front() == indicesC.front();
                            // transpose A
-                           helperTranspose(mIndicesC, kIndicesA, indicesA, candidate.transA, candidate.indicesA);
+                           helperTranspose(loopIndices,mIndicesC, kIndicesA, indicesA, candidate.transA, candidate.indicesA);
                            // transpose B
-                           helperTranspose(kIndicesA, nIndicesC, indicesB, candidate.transB, candidate.indicesB);
+                           helperTranspose(loopIndices,kIndicesA, nIndicesC, indicesB, candidate.transB, candidate.indicesB);
                         }
                      }else{
                         if( totalSizeA > totalSizeC ){
@@ -510,7 +526,7 @@ namespace tcl
                            candidate.indicesB = indicesB;
                            candidate.transB = nIndicesB.front() == indicesB.front();
                            // transpose C
-                           helperTranspose(mIndicesA, nIndicesB, indicesC, candidate.interchangeAB, candidate.indicesC);
+                           helperTranspose(loopIndices,mIndicesA, nIndicesB, indicesC, candidate.interchangeAB, candidate.indicesC);
                         }else{
                            //dont transpose B
                            candidate.indicesB = indicesB;
@@ -519,7 +535,7 @@ namespace tcl
                            candidate.indicesC = indicesC;
                            candidate.interchangeAB = nIndicesC.front() == indicesC.front();
                            // transpose A
-                           helperTranspose(mIndicesC, kIndicesB, indicesA, candidate.transA, candidate.indicesA);
+                           helperTranspose(loopIndices,mIndicesC, kIndicesB, indicesA, candidate.transA, candidate.indicesA);
                         }
                      }
                   }else{
@@ -533,13 +549,13 @@ namespace tcl
                            candidate.indicesC = indicesC;
                            candidate.interchangeAB = nIndicesC.front() == indicesC.front();
                            // transpose B
-                           helperTranspose(kIndicesA, nIndicesC, indicesB, candidate.transB, candidate.indicesB);
+                           helperTranspose(loopIndices,kIndicesA, nIndicesC, indicesB, candidate.transB, candidate.indicesB);
                         }else{
                            //dont transpose B
                            candidate.indicesB = indicesB;
                            candidate.transB = nIndicesB.front() == indicesB.front();
                            // transpose C
-                           helperTranspose(mIndicesA, nIndicesB, indicesC, candidate.interchangeAB, candidate.indicesC);
+                           helperTranspose(loopIndices,mIndicesA, nIndicesB, indicesC, candidate.interchangeAB, candidate.indicesC);
                         }
                      }else{
                         //dont transpose B
@@ -568,6 +584,64 @@ namespace tcl
 #endif
       return;
    }
+
+   template<typename floatType>
+   void batchedGEMM( const floatType alpha, const floatType* A, const floatType *B, const floatType beta, floatType *C, const TTGTCandidate &candidate,
+         const sizeType m, const sizeType n, const sizeType k, const std::vector<sizeType> &sizes,  
+         const std::vector<sizeType> &stridesA, const std::vector<sizeType> &stridesB, const std::vector<sizeType> &stridesC, const int level)
+   {
+      if( level >= stridesA.size() )
+      {
+         if( candidate.interchangeAB )
+            if( candidate.transA )
+               if( candidate.transB )
+                  // n,m <- n,k x k,m
+                  gemm<floatType>("N", "N", &n, &m, &k,
+                        &alpha, B, &n, A, &k, &beta, C, &n);
+               else
+                  // n,m <- k,n x k,m
+                  gemm<floatType>("T", "N", &n, &m, &k,
+                        &alpha, B, &k, A, &k, &beta, C, &n);
+            else
+               if( candidate.transB )
+                  // n,m <- n,k x m,k
+                  gemm<floatType>("N", "T", &n, &m, &k,
+                        &alpha, B, &n, A, &m, &beta, C, &n);
+               else
+                  // n,m <- k,n x m,k
+                  gemm<floatType>("T", "T", &n, &m, &k,
+                        &alpha, B, &k, A, &m, &beta, C, &n);
+         else
+            if( candidate.transA )
+               if( candidate.transB )
+                  // m,n <- k,m x n,k
+                  gemm<floatType>("T", "T", &m, &n, &k,
+                        &alpha, A, &k, B, &n, &beta, C, &m);
+               else
+                  // m,n <- k,m x k,n
+                  gemm<floatType>("T", "N", &m, &n, &k,
+                        &alpha, A, &k, B, &k, &beta, C, &m);
+            else
+               if( candidate.transB )
+                  // m,n <- m,k x n,k
+                  gemm<floatType>("N", "T", &m, &n, &k,
+                        &alpha, A, &m, B, &n, &beta, C, &m);
+               else
+                  // m,n <- m,k x k,n
+                  gemm<floatType>("N", "N", &m, &n, &k,
+                        &alpha, A, &m, B, &k, &beta, C, &m);
+      } else {
+         auto end = sizes[level];
+         const auto strideA = stridesA[level];
+         const auto strideB = stridesB[level];
+         const auto strideC = stridesC[level];
+         //TODO call batched GEMM
+#pragma omp parallel for if(level==0)
+         for(sizeType i=0; i < end; ++i)
+            batchedGEMM( alpha, A + i * strideA, B + i * strideB, beta, C + i * strideC, 
+                  candidate, m, n, k, sizes, stridesA, stridesB, stridesC, level+1 );
+      }
+   }
    
    template<typename floatType>
    error contractTTGT(const floatType alpha, const Tensor<floatType> *A, const Tensor<floatType> *B,  const floatType beta, Tensor<floatType> *C)
@@ -581,168 +655,39 @@ namespace tcl
       auto indicesC = C->getIndices(); 
       auto loopIndices = intersect(indicesA, intersect(indicesB, indicesC));
       //! also known as the free indices of A 
-      auto mIndices = intersect(indicesA, indicesC);
+      auto mIndices = setMinus(intersect(indicesA, indicesC), loopIndices);
       //! also known as the free indices of B
-      auto nIndices = intersect(indicesB, indicesC);
+      auto nIndices = setMinus(intersect(indicesB, indicesC), loopIndices);
       //! also known as the contracted indices 
-      auto kIndices = intersect(indicesA, indicesB); 
-
+      auto kIndices = setMinus(intersect(indicesA, indicesB), loopIndices);
 
       if( mIndices.size() <= 0 || nIndices.size() <= 0 || kIndices.size() <= 0 ) // TTGT is not applicable; use fallback
          return contract(alpha, A, B, beta, C);
 
-      if( loopIndices.size() > 0 )
-      {
-         // ensure that loop indices are the outermost indices
-         auto mIndices = setMinus(intersect(indicesA, indicesC), loopIndices);
-         auto nIndices = setMinus(intersect(indicesB, indicesC), loopIndices);
-         auto kIndices = setMinus(intersect(indicesA, indicesB), loopIndices);
-         indicesType newIndicesA, newIndicesB, newIndicesC;
-         findPerm_helper(indicesA, indicesB, indicesC, mIndices, nIndices, kIndices, loopIndices, 
-               newIndicesA, newIndicesB, newIndicesC);
-
-         // TODO: the transpositions should be avoided if the contraction cannot map to GEMM
-         
-         int numThreads = getNumThreads(); 
-
-         sizeType totalSizeA = A->getTotalSize() * sizeof(floatType);
-         sizeType totalSizeB = B->getTotalSize() * sizeof(floatType);
-         sizeType totalSizeC = C->getTotalSize() * sizeof(floatType);
-         memBroker.alloc( totalSizeA + totalSizeB + totalSizeC ); //TODO in many cases, this could be smaller since not all tensors necessarily have to be transposed
-
-         const Tensor<floatType> *newA, *newB;
-         Tensor<floatType> *newC; 
-         // Transpose A
-         if( newIndicesA.size() > 0 ) {
-            auto permA = getPermutation(indicesA, newIndicesA);
-            auto sizeA = permute(permA, A->getSize());
-            floatType *buffer = (floatType*) memBroker.requestMemory(totalSizeA);
-            // create plan for Transposition
-            auto plan = hptt::create_plan( permA, A->getDim(),
-                  1, A->getData(), A->getSize(), A->getOuterSize(), 
-                  0, buffer, sizeA, hptt::ESTIMATE, numThreads);
-            plan->execute();
-
-            newA = new Tensor<floatType>(sizeA, buffer, sizeA, newIndicesA);
-         }else
-            newA = A;
-         
-         // Transpose B
-         if( newIndicesB.size() > 0 ) {
-            auto permB = getPermutation(indicesB, newIndicesB);
-            auto sizeB = permute(permB, B->getSize());
-            floatType *buffer = (floatType*) memBroker.requestMemory(totalSizeB);
-            // create plan for Transposition
-            auto plan = hptt::create_plan( permB, B->getDim(),
-                  1, B->getData(), B->getSize(), B->getOuterSize(), 
-                  0, buffer, sizeB, hptt::ESTIMATE, numThreads);
-            plan->execute();
-
-            newB = new Tensor<floatType>(sizeB, buffer, sizeB, newIndicesB);
-         }else
-            newB = B;
-         
-         if( newIndicesC.size() > 0 ) {
-            auto permC = getPermutation(indicesC, newIndicesC);
-            auto sizeC = permute(permC, C->getSize());
-            floatType *buffer = (floatType*) memBroker.requestMemory(totalSizeC);
-            newC = new Tensor<floatType>(sizeC, buffer, sizeC, newIndicesC);
-         } else
-            newC = C;
-
-         std::vector<sizeType> sizeSubA,sizeSubB,sizeSubC; 
-         indicesType subIndicesA, subIndicesB, subIndicesC;
-         int dimSubA = newA->getDim() - loopIndices.size();
-         int dimSubB = newB->getDim() - loopIndices.size();
-         int dimSubC = newC->getDim() - loopIndices.size();
-
-         auto itA = newA->getIndices().begin();
-         auto itB = newB->getIndices().begin();
-         auto itC = newC->getIndices().begin();
-         for(int i=0; i < dimSubA; ++i, itA++) {
-            sizeSubA.push_back(newA->getSize()[i]);
-            subIndicesA.emplace_back(*itA);
-         }
-         for(int i=0; i < dimSubB; ++i, itB++){
-            sizeSubB.push_back(newB->getSize()[i]);
-            subIndicesB.emplace_back(*itB);
-         }
-         for(int i=0; i < dimSubC; ++i, itC++){
-            sizeSubC.push_back(newC->getSize()[i]);
-            subIndicesC.emplace_back(*itC);
-         }
-
-         floatType *dataA = newA->getData();
-         floatType *dataB = newB->getData();
-         floatType *dataC = newC->getData();
-         Tensor<floatType> subA(sizeSubA, dataA, sizeSubA, subIndicesA);
-         Tensor<floatType> subB(sizeSubB, dataB, sizeSubB, subIndicesB);
-         Tensor<floatType> subC(sizeSubC, dataC, sizeSubC, subIndicesC);
-
-//         printVector(loopIndices, "loop indices");
-//         std::cout<< "__________A____________\n";
-//         A->print();
-//         newA->print();
-//         subA.print();
-//         std::cout<< "__________B____________\n";
-//         B->print();
-//         newB->print();
-//         subB.print();
-//         std::cout<< "__________C____________\n";
-//         C->print();
-//         newC->print();
-//         subC.print();
-
-         floatType betaGEMM = beta;
-         if( newIndicesC.size() > 0 ) 
-            betaGEMM = 0.0;
-
-         // TODO: ideally one would exploit the parallelism at this level (e.g., batched gemm)
-         processLoopedIndices(alpha, &subA, &subB, betaGEMM, &subC, loopIndices.begin(), loopIndices.end()); 
-
-         if( newIndicesA.size() > 0 ) 
-            delete newA;
-         if( newIndicesB.size() > 0 ) 
-            delete newB;
-
-         if( newIndicesC.size() > 0 ) {
-            auto permC = getPermutation(newC->getIndices(), C->getIndices());
-            // create plan for Transposition
-            auto plan = hptt::create_plan( permC, newC->getDim(),
-                  1, newC->getData(), newC->getSize(), newC->getOuterSize(), 
-                  beta, C->getData(), C->getOuterSize(), hptt::ESTIMATE, numThreads);
-            plan->execute();
-            delete newC;
-         }
-         return SUCCESS; //TODO
-      }
-      
-#ifdef TIMERS
-      auto indexTime = omp_get_wtime() - start;
-      printf("TCL index: %f\n",indexTime);
-#endif
-
-      /*********************
-       * select best TTGT candidate
-       *********************/
-#ifdef TIMERS
-      start = omp_get_wtime();
-#endif
       sizeType totalSizeA = A->getTotalSize() * sizeof(floatType);
       sizeType totalSizeB = B->getTotalSize() * sizeof(floatType);
       sizeType totalSizeC = C->getTotalSize() * sizeof(floatType);
       TTGTCandidate candidate;
-      getBestTTGTCandidate(indicesA, totalSizeA, 
-                           indicesB, totalSizeB,
-                           indicesC, totalSizeC,
-                           mIndices, nIndices, kIndices,
-                           candidate);
-#ifdef TIMERS
-      auto getBestTime = omp_get_wtime() - start;
-      printf("TCL best: %f\n",getBestTime);
-#endif
-      
 
+      if( loopIndices.size() > 0 )
+      {
+         // ensure that loop indices are the outermost indices
+         indicesType newIndicesA, newIndicesB, newIndicesC;
+         findPerm_helper(indicesA, indicesB, indicesC, mIndices, nIndices, kIndices, loopIndices, 
+               newIndicesA, newIndicesB, newIndicesC);
+
+         getBestTTGTCandidate(newIndicesA, totalSizeA, 
+               newIndicesB, totalSizeB,
+               newIndicesC, totalSizeC,
+               loopIndices, mIndices, nIndices, kIndices, candidate);
+
+      }else{
+         getBestTTGTCandidate(indicesA, totalSizeA, 
+               indicesB, totalSizeB,
+               indicesC, totalSizeC,
+               loopIndices, mIndices, nIndices, kIndices, candidate);
+      }
+      
 #ifdef TIMERS
       start = omp_get_wtime();
 #endif
@@ -843,58 +788,44 @@ namespace tcl
       /*********************
        * GEMM 
        *********************/
-      sizeType totalSizeM = A->getTotalSize(mIndices);
-      sizeType totalSizeN = B->getTotalSize(nIndices);
-      sizeType totalSizeK = A->getTotalSize(kIndices);
+      std::vector<sizeType> stridesA, stridesB, stridesC, sizes;
+      if( loopIndices.size() > 0 ){
+         auto m = A->getTotalSize(mIndices);
+         auto n = B->getTotalSize(nIndices);
+         auto k = A->getTotalSize(kIndices);
+         auto strideA = m * k;
+         auto strideB = n * k;
+         auto strideC = m * n;
+         for( auto idx : loopIndices )
+            sizes.emplace_back(A->getSize(idx));
+         for( auto idx : candidate.indicesA ){
+            if( find(idx, loopIndices ) ) {
+               stridesA.emplace_back(strideA);
+               strideA *= A->getSize(idx);
+            }
+         }
+         for( auto idx : candidate.indicesB ){
+            if( find(idx, loopIndices ) ) {
+               stridesB.emplace_back(strideB);
+               strideB *= B->getSize(idx);
+            }
+         }
+         for( auto idx : candidate.indicesC ){
+            if( find(idx, loopIndices ) ) {
+               stridesC.emplace_back(strideC);
+               strideC *= C->getSize(idx);
+            }
+         }
+      }
+
 #ifdef TIMERS
       start = omp_get_wtime();
 #endif
-      if( candidate.interchangeAB )
-         if( candidate.transA )
-            if( candidate.transB )
-               // n,m <- n,k x k,m
-               gemm<floatType>("N", "N", &totalSizeN, &totalSizeM, &totalSizeK,
-                     &alpha, bufferB, &totalSizeN, bufferA, &totalSizeK,
-                     &betaGEMM, bufferC, &totalSizeN);
-            else
-               // n,m <- k,n x k,m
-               gemm<floatType>("T", "N", &totalSizeN, &totalSizeM, &totalSizeK,
-                     &alpha, bufferB, &totalSizeK, bufferA, &totalSizeK,
-                     &betaGEMM, bufferC, &totalSizeN);
-         else
-            if( candidate.transB )
-               // n,m <- n,k x m,k
-               gemm<floatType>("N", "T", &totalSizeN, &totalSizeM, &totalSizeK,
-                     &alpha, bufferB, &totalSizeN, bufferA, &totalSizeM,
-                     &betaGEMM, bufferC, &totalSizeN);
-            else
-               // n,m <- k,n x m,k
-               gemm<floatType>("T", "T", &totalSizeN, &totalSizeM, &totalSizeK,
-                     &alpha, bufferB, &totalSizeK, bufferA, &totalSizeM,
-                     &betaGEMM, bufferC, &totalSizeN);
-      else
-         if( candidate.transA )
-            if( candidate.transB )
-               // m,n <- k,m x n,k
-               gemm<floatType>("T", "T", &totalSizeM, &totalSizeN, &totalSizeK,
-                     &alpha, bufferA, &totalSizeK, bufferB, &totalSizeN,
-                     &betaGEMM, bufferC, &totalSizeM);
-            else
-               // m,n <- k,m x k,n
-               gemm<floatType>("T", "N", &totalSizeM, &totalSizeN, &totalSizeK,
-                     &alpha, bufferA, &totalSizeK, bufferB, &totalSizeK,
-                     &betaGEMM, bufferC, &totalSizeM);
-         else
-            if( candidate.transB )
-               // m,n <- m,k x n,k
-               gemm<floatType>("N", "T", &totalSizeM, &totalSizeN, &totalSizeK,
-                     &alpha, bufferA, &totalSizeM, bufferB, &totalSizeN,
-                     &betaGEMM, bufferC, &totalSizeM);
-            else
-               // m,n <- m,k x k,n
-               gemm<floatType>("N", "N", &totalSizeM, &totalSizeN, &totalSizeK,
-                     &alpha, bufferA, &totalSizeM, bufferB, &totalSizeK,
-                     &betaGEMM, bufferC, &totalSizeM);
+
+      batchedGEMM( alpha, bufferA, bufferB,  betaGEMM, bufferC, 
+            candidate, A->getTotalSize(mIndices), B->getTotalSize(nIndices), A->getTotalSize(kIndices),
+            sizes, stridesA, stridesB, stridesC, 0 );
+
 #ifdef TIMERS
       auto gemmTime = omp_get_wtime() - start;
       printf("TCL GEMM: %f\n", gemmTime);
@@ -1320,7 +1251,7 @@ namespace tcl
       }
 
       // swap A and B if the stride-1 index of C appears in B
-      if( find(indicesC.front(), indicesB) )
+      if( find(indicesC.front(), indicesB) && !find(indicesC.front(), indicesA) )
          std::swap(A, B);
 
       return contractTTGT(alpha, A, B, beta, C);

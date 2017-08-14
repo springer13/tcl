@@ -54,11 +54,12 @@ namespace tcl
                     const T &b,
                     T &c)
    {
-      c.clear();
-      for(auto x : a)
-         c.emplace_back(x);
-      for(auto x : b)
-         c.emplace_back(x);
+      auto endA = a.end();
+      for(auto it = a.begin(); it != endA; it++)
+         c.emplace_back(*it);
+      auto endB = b.end();
+      for(auto it = b.begin(); it != endB; it++)
+         c.emplace_back(*it);
    }
    /**
     * intersects the two vectors a and b and stores the result into c

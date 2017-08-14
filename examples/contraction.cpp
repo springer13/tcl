@@ -27,16 +27,17 @@ int main(int argc, char** argv)
    tcl::sizeType n = 4;
    tcl::sizeType k1 = 2;
    tcl::sizeType k2 = 3;
+   tcl::sizeType l1 = 6;
 
    float *dataA, *dataB, *dataC;
-   posix_memalign((void**) &dataA, 64, sizeof(float) * k2*m*k1);
-   posix_memalign((void**) &dataB, 64, sizeof(float) * n*k2*k1);
-   posix_memalign((void**) &dataC, 64, sizeof(float) * m*n);
+   posix_memalign((void**) &dataA, 64, sizeof(float) * k2*m*k1*l1);
+   posix_memalign((void**) &dataB, 64, sizeof(float) * n*k2*k1*l1);
+   posix_memalign((void**) &dataC, 64, sizeof(float) * m*n*l1);
 
    // Initialize tensors (data is not owned by the tensors)
-   tcl::Tensor<float> A({k2,m,k1}, dataA);
-   tcl::Tensor<float> B({n,k2,k1}, dataB);
-   tcl::Tensor<float> C({m,n}, dataC);
+   tcl::Tensor<float> A({k1,m,k2,l1}, dataA);
+   tcl::Tensor<float> B({n,k2,k1,l1}, dataB);
+   tcl::Tensor<float> C({m,n,l1}, dataC);
 
    // Data initialization
 #pragma omp parallel for
@@ -53,7 +54,7 @@ int main(int argc, char** argv)
    float beta = 4;
 
    // tensor contarction: C_{m,n} = alpha * A_{k2,m,k1} * B_{n,k2,k1} + beta * C_{m,n}
-   auto err = tcl::tensorMult<float>( alpha, A["k2,m,k1"], B["n,k2,k1"], beta, C["m,n"] );
+   auto err = tcl::tensorMult<float>( alpha, A["k1,m,k2,l1"], B["n,k2,k1,l1"], beta, C["m,n,l1"] );
    if( err != tcl::SUCCESS ){
       printf("ERROR: %s\n", tcl::getErrorString(err));
       exit(-1);
