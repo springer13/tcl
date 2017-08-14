@@ -51,6 +51,8 @@ namespace tcl
             return "Tensor size invalid. Mismatch between the sizes of two indices.";
          case INTERNAL_ERROR:
             return "Internal error.";
+         case TENSOR_CONTRACTION_UNSUPPORTED:
+            return "The specified tensor contraction is not yet supported. Please open a ticket saying that you need this type of tensor contraction.";
          default:
             return "Unkown error.";
       }

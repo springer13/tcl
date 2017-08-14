@@ -57,6 +57,9 @@ namespace tcl{
    class Tensor
    {
       public:
+
+         Tensor() : data(nullptr) {};
+
          Tensor( const std::vector<sizeType> &size, 
                  floatType *data,
                  const std::vector<sizeType> &outerSize = {},
@@ -68,8 +71,8 @@ namespace tcl{
                                          _size(other._size),
                                          _outerSize(other._outerSize),
                                          _indices(other._indices),
-                                         _offsets(other._offsets),
-                                         _isSubtensor(false) {}
+                                         _offsets(other._offsets)
+                                         {}
          ~Tensor() { }
 
          /**
@@ -118,6 +121,20 @@ namespace tcl{
 
             return &_data[offset]; 
          }
+         int getIndexPos(std::string index) const { 
+            int pos = 0;
+            for( auto idx : _indices )
+               if( idx == index )
+                  return pos;
+               else
+                  pos++;
+
+            return -1;
+         }
+
+         void setOffset(int indexPos, sizeType offset) { 
+            _offsets[indexPos] = offset;
+         }
          void setData(floatType *data) { _data = data; }
 
          Tensor* operator[] (const std::string &&indices){
@@ -132,7 +149,6 @@ namespace tcl{
          void print() const;
 
       private:
-         Tensor() {};
 
          /***************************************
           * private member functions
@@ -143,7 +159,6 @@ namespace tcl{
          std::vector<sizeType> _outerSize; 
          indicesType _indices;
          std::vector<sizeType> _offsets; 
-         bool _isSubtensor;
    };
 }
 

@@ -100,6 +100,89 @@ namespace tcl
       }
       return cost;
    }
+   
+   /// target indes will be aIndices(sorted w.r.t. orderA) + bIndices(sorted w.r.t. orderB) + loopIndices
+   void concatinate_helper(const indicesType &aIndices, const indicesType &orderA, const indicesType &bIndices, const indicesType &orderB, const indicesType &loopIndices, indicesType &target)
+   {
+      for(auto idx : orderA )
+         if( find(idx, aIndices) )
+            target.emplace_back(idx);
+      for(auto idx : orderB )
+         if( find(idx, bIndices) )
+            target.emplace_back(idx);
+      for(auto idx : loopIndices)
+         target.emplace_back(idx);
+   }
+
+   /// determine the transpositions required in order to support indices that appear in all tensors
+   void findPerm_helper(const indicesType &indicesA, const indicesType &indicesB, const indicesType &indicesC, 
+         const indicesType &mIndices, const indicesType &nIndices, const indicesType &kIndices, const indicesType &loopIndices, 
+         indicesType &newIndicesA, indicesType &newIndicesB, indicesType &newIndicesC)
+   {
+      bool transAreq = false;
+      bool transBreq = false;
+      bool transCreq = false;
+      for(auto idx : loopIndices)
+      {
+         for(auto it = indicesA.rbegin(); it != indicesA.rend() && *it != idx; it++)
+            if( not find(*it, loopIndices) ) {
+               transAreq = true;
+               break;
+            }
+         for(auto it = indicesB.rbegin(); it != indicesB.rend() && *it != idx; it++)
+            if( not find(*it, loopIndices) ) {
+               transBreq = true;
+               break;
+            }
+         for(auto it = indicesC.rbegin(); it != indicesC.rend() && *it != idx; it++)
+            if( not find(*it, loopIndices) ) {
+               transCreq = true;
+               break;
+            }
+      }
+
+      if( transAreq ){
+         if( find( indicesA.front(), mIndices ) ) //choose permutation that can presurve the stride-1 index
+            concatinate_helper(mIndices, indicesC, kIndices, indicesB, loopIndices, newIndicesA);
+         else
+            concatinate_helper(kIndices, indicesB, mIndices, indicesC, loopIndices, newIndicesA);
+         if( transBreq ){
+            if( find( indicesB.front(), nIndices ) ) //choose permutation that can presurve the stride-1 index
+               concatinate_helper(nIndices, indicesC, kIndices, indicesB, loopIndices, newIndicesB);
+            else
+               concatinate_helper(kIndices, indicesB, nIndices, indicesC, loopIndices, newIndicesB);
+            if( transCreq )
+               if( find( indicesB.front(), mIndices ) ) //choose permutation that can presurve the stride-1 index
+                  concatinate_helper(mIndices, indicesC, nIndices, indicesC, loopIndices, newIndicesC);
+               else
+                  concatinate_helper(nIndices, indicesC, mIndices, indicesC, loopIndices, newIndicesC);
+         }else{
+            if( transCreq )
+               if( find( indicesC.front(), mIndices ) ) //choose permutation that can presurve the stride-1 index
+                  concatinate_helper(mIndices, indicesC, nIndices, indicesB, loopIndices, newIndicesC);
+               else
+                  concatinate_helper(nIndices, indicesB, mIndices, indicesC, loopIndices, newIndicesC);
+         }
+      }else{
+         if( transBreq ){
+            if( find( indicesB.front(), nIndices ) ) //choose permutation that can presurve the stride-1 index
+               concatinate_helper(nIndices, indicesC, kIndices, indicesA, loopIndices, newIndicesB);
+            else
+               concatinate_helper(kIndices, indicesA, nIndices, indicesC, loopIndices, newIndicesB);
+            if( transCreq )
+               if( find( indicesC.front(), mIndices ) ) //choose permutation that can presurve the stride-1 index
+                  concatinate_helper(mIndices, indicesA, nIndices, indicesC, loopIndices, newIndicesC);
+               else
+                  concatinate_helper(nIndices, indicesC, mIndices, indicesA, loopIndices, newIndicesC);
+         }else{
+            if( transCreq )
+               if( find( indicesC.front(), mIndices ) ) //choose permutation that can presurve the stride-1 index
+                  concatinate_helper(mIndices, indicesA, nIndices, indicesB, loopIndices, newIndicesC);
+               else
+                  concatinate_helper(nIndices, indicesB, mIndices, indicesA, loopIndices, newIndicesC);
+         }
+      }
+   }
 
    static void helperTranspose(const indicesType& aIndices, const indicesType& bIndices, const indicesType& indicesT,
         bool &trans, indicesType& indices )
@@ -116,7 +199,6 @@ namespace tcl
    void getBestTTGTCandidate(const indicesType &indicesA, const sizeType totalSizeA, 
                                       const indicesType &indicesB, const sizeType totalSizeB,
                                       const indicesType &indicesC, const sizeType totalSizeC,
-                                      const indicesType &loopIndices,
                                       const indicesType &mIndices,
                                       const indicesType &nIndices,
                                       const indicesType &kIndices,
@@ -493,34 +575,148 @@ namespace tcl
 #ifdef TIMERS
       auto start = omp_get_wtime();
 #endif
-      
+
       auto indicesA = A->getIndices();
       auto indicesB = B->getIndices();
       auto indicesC = C->getIndices(); 
-
       auto loopIndices = intersect(indicesA, intersect(indicesB, indicesC));
       //! also known as the free indices of A 
-      auto mIndices = setMinus(intersect(indicesA, indicesC), loopIndices);
+      auto mIndices = intersect(indicesA, indicesC);
       //! also known as the free indices of B
-      auto nIndices = setMinus(intersect(indicesB, indicesC), loopIndices);
+      auto nIndices = intersect(indicesB, indicesC);
       //! also known as the contracted indices 
-      auto kIndices = setMinus(intersect(indicesA, indicesB), loopIndices);
+      auto kIndices = intersect(indicesA, indicesB); 
 
-      if( loopIndices.size() > 0 ){
-         printVector(loopIndices, "loop indices");
-         printf("inidices that appear in all tensors are not yet supported.\n");
-         auto subA = A->getSubTensor(setMinus(indicesA, loopIndices));
-         auto subB = B->getSubTensor(setMinus(indicesB, loopIndices));
-         auto subC = C->getSubTensor(setMinus(indicesC, loopIndices));
-         subA.print();
-         subB.print();
-         subC.print();
-         return INTERNAL_ERROR;
-      }
 
       if( mIndices.size() <= 0 || nIndices.size() <= 0 || kIndices.size() <= 0 ) // TTGT is not applicable; use fallback
          return contract(alpha, A, B, beta, C);
 
+      if( loopIndices.size() > 0 )
+      {
+         // ensure that loop indices are the outermost indices
+         auto mIndices = setMinus(intersect(indicesA, indicesC), loopIndices);
+         auto nIndices = setMinus(intersect(indicesB, indicesC), loopIndices);
+         auto kIndices = setMinus(intersect(indicesA, indicesB), loopIndices);
+         indicesType newIndicesA, newIndicesB, newIndicesC;
+         findPerm_helper(indicesA, indicesB, indicesC, mIndices, nIndices, kIndices, loopIndices, 
+               newIndicesA, newIndicesB, newIndicesC);
+
+         // TODO: the transpositions should be avoided if the contraction cannot map to GEMM
+         
+         int numThreads = getNumThreads(); 
+
+         sizeType totalSizeA = A->getTotalSize() * sizeof(floatType);
+         sizeType totalSizeB = B->getTotalSize() * sizeof(floatType);
+         sizeType totalSizeC = C->getTotalSize() * sizeof(floatType);
+         memBroker.alloc( totalSizeA + totalSizeB + totalSizeC ); //TODO in many cases, this could be smaller since not all tensors necessarily have to be transposed
+
+         const Tensor<floatType> *newA, *newB;
+         Tensor<floatType> *newC; 
+         // Transpose A
+         if( newIndicesA.size() > 0 ) {
+            auto permA = getPermutation(indicesA, newIndicesA);
+            auto sizeA = permute(permA, A->getSize());
+            floatType *buffer = (floatType*) memBroker.requestMemory(totalSizeA);
+            // create plan for Transposition
+            auto plan = hptt::create_plan( permA, A->getDim(),
+                  1, A->getData(), A->getSize(), A->getOuterSize(), 
+                  0, buffer, sizeA, hptt::ESTIMATE, numThreads);
+            plan->execute();
+
+            newA = new Tensor<floatType>(sizeA, buffer, sizeA, newIndicesA);
+         }else
+            newA = A;
+         
+         // Transpose B
+         if( newIndicesB.size() > 0 ) {
+            auto permB = getPermutation(indicesB, newIndicesB);
+            auto sizeB = permute(permB, B->getSize());
+            floatType *buffer = (floatType*) memBroker.requestMemory(totalSizeB);
+            // create plan for Transposition
+            auto plan = hptt::create_plan( permB, B->getDim(),
+                  1, B->getData(), B->getSize(), B->getOuterSize(), 
+                  0, buffer, sizeB, hptt::ESTIMATE, numThreads);
+            plan->execute();
+
+            newB = new Tensor<floatType>(sizeB, buffer, sizeB, newIndicesB);
+         }else
+            newB = B;
+         
+         if( newIndicesC.size() > 0 ) {
+            auto permC = getPermutation(indicesC, newIndicesC);
+            auto sizeC = permute(permC, C->getSize());
+            floatType *buffer = (floatType*) memBroker.requestMemory(totalSizeC);
+            newC = new Tensor<floatType>(sizeC, buffer, sizeC, newIndicesC);
+         } else
+            newC = C;
+
+         std::vector<sizeType> sizeSubA,sizeSubB,sizeSubC; 
+         indicesType subIndicesA, subIndicesB, subIndicesC;
+         int dimSubA = newA->getDim() - loopIndices.size();
+         int dimSubB = newB->getDim() - loopIndices.size();
+         int dimSubC = newC->getDim() - loopIndices.size();
+
+         auto itA = newA->getIndices().begin();
+         auto itB = newB->getIndices().begin();
+         auto itC = newC->getIndices().begin();
+         for(int i=0; i < dimSubA; ++i, itA++) {
+            sizeSubA.push_back(newA->getSize()[i]);
+            subIndicesA.emplace_back(*itA);
+         }
+         for(int i=0; i < dimSubB; ++i, itB++){
+            sizeSubB.push_back(newB->getSize()[i]);
+            subIndicesB.emplace_back(*itB);
+         }
+         for(int i=0; i < dimSubC; ++i, itC++){
+            sizeSubC.push_back(newC->getSize()[i]);
+            subIndicesC.emplace_back(*itC);
+         }
+
+         floatType *dataA = newA->getData();
+         floatType *dataB = newB->getData();
+         floatType *dataC = newC->getData();
+         Tensor<floatType> subA(sizeSubA, dataA, sizeSubA, subIndicesA);
+         Tensor<floatType> subB(sizeSubB, dataB, sizeSubB, subIndicesB);
+         Tensor<floatType> subC(sizeSubC, dataC, sizeSubC, subIndicesC);
+
+//         printVector(loopIndices, "loop indices");
+//         std::cout<< "__________A____________\n";
+//         A->print();
+//         newA->print();
+//         subA.print();
+//         std::cout<< "__________B____________\n";
+//         B->print();
+//         newB->print();
+//         subB.print();
+//         std::cout<< "__________C____________\n";
+//         C->print();
+//         newC->print();
+//         subC.print();
+
+         floatType betaGEMM = beta;
+         if( newIndicesC.size() > 0 ) 
+            betaGEMM = 0.0;
+
+         // TODO: ideally one would exploit the parallelism at this level (e.g., batched gemm)
+         processLoopedIndices(alpha, &subA, &subB, betaGEMM, &subC, loopIndices.begin(), loopIndices.end()); 
+
+         if( newIndicesA.size() > 0 ) 
+            delete newA;
+         if( newIndicesB.size() > 0 ) 
+            delete newB;
+
+         if( newIndicesC.size() > 0 ) {
+            auto permC = getPermutation(newC->getIndices(), C->getIndices());
+            // create plan for Transposition
+            auto plan = hptt::create_plan( permC, newC->getDim(),
+                  1, newC->getData(), newC->getSize(), newC->getOuterSize(), 
+                  beta, C->getData(), C->getOuterSize(), hptt::ESTIMATE, numThreads);
+            plan->execute();
+            delete newC;
+         }
+         return SUCCESS; //TODO
+      }
+      
 #ifdef TIMERS
       auto indexTime = omp_get_wtime() - start;
       printf("TCL index: %f\n",indexTime);
@@ -537,10 +733,10 @@ namespace tcl
       sizeType totalSizeC = C->getTotalSize() * sizeof(floatType);
       TTGTCandidate candidate;
       getBestTTGTCandidate(indicesA, totalSizeA, 
-                                            indicesB, totalSizeB,
-                                            indicesC, totalSizeC,
-                                            loopIndices, mIndices, nIndices, kIndices,
-                                            candidate);
+                           indicesB, totalSizeB,
+                           indicesC, totalSizeC,
+                           mIndices, nIndices, kIndices,
+                           candidate);
 #ifdef TIMERS
       auto getBestTime = omp_get_wtime() - start;
       printf("TCL best: %f\n",getBestTime);
@@ -912,6 +1108,9 @@ namespace tcl
       //! also known as the contracted indices 
       auto kIndices = setMinus(intersect(A->getIndices(), B->getIndices()), loopIndices);
       
+      if( loopIndices.size() > 0 )
+         return TENSOR_CONTRACTION_UNSUPPORTED;
+
       //ensure that a stride-1 indx is the innermost loop if it belongs to the kIndices
       auto posB = findPos(B->getIndices().front(), kIndices);
       auto posA = findPos(A->getIndices().front(), kIndices);
@@ -1030,6 +1229,36 @@ namespace tcl
 
 
    template<typename floatType>
+   error processLoopedIndices(const floatType alpha, const Tensor<floatType> *A, 
+                                                     const Tensor<floatType> *B, 
+                              const floatType beta,        Tensor<floatType> *C,
+                              indicesType::iterator it, const indicesType::iterator &end) 
+   {
+      if( it != end ){
+         auto loopIdx = *it;
+         auto loopSize = A->getSize(loopIdx);
+         auto loopStrideA = A->getStride(loopIdx);
+         auto loopStrideB = B->getStride(loopIdx);
+         auto loopStrideC = C->getStride(loopIdx);
+
+         const floatType *dataA = A->getData();
+         const floatType *dataB = B->getData();
+         floatType *dataC = C->getData();
+
+         for(int l=0; l < loopSize; ++l){
+            A->setData(dataA + loopStrideA * l);
+            B->setData(dataB + loopStrideB * l);
+            C->setData(dataC + loopStrideC * l);
+
+            processLoopedIndices(alpha, A, B, beta, C, it++, end);
+         }
+      }else{
+         contractTTGT(alpha, A, B, beta, C);
+      }
+      return SUCCESS;
+   }
+
+   template<typename floatType>
    error tensorMult(const floatType alpha, const Tensor<floatType> *A,
                                          const Tensor<floatType> *B, 
                   const floatType beta,        Tensor<floatType> *C) 
@@ -1095,7 +1324,7 @@ namespace tcl
          std::swap(A, B);
 
       return contractTTGT(alpha, A, B, beta, C);
-   }; 
+   } 
 
    template error contract<float>(const float alpha, const Tensor<float> *A, const Tensor<float> *B,  const float beta, Tensor<float> *C);
 

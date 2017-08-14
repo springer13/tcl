@@ -120,7 +120,6 @@ namespace tcl
                               const std::vector<sizeType> &offsets
                               ) : 
                                  _data(data),
-                                 _isSubtensor(false),
                                  _size(size),
                                  _outerSize(outerSize),
                                  _indices(indices),
