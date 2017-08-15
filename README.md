@@ -112,7 +112,13 @@ case a dense tensor with size=outerSize is assumed.
 
 ## Python-Interface
 
-See ./pythonAPI/benchmark/ for examples
+TCL now also offers a python-interface. The functionality offered by TCL is comparable to that of [numpy.einsum](https://docs.scipy.org/doc/numpy/reference/generated/numpy.einsum.html):
+
+    tensorMult( alpha, A, indicesA, B, indicesB, beta,  C, indicesC)
+
+See docstring for additional information.
+
+Several examples can be found under ./benchmark/python/
 
 # Key Features
 
