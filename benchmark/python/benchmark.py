@@ -29,6 +29,9 @@ if( args.alpha):
     alpha = float(args.alpha)
 if( args.beta):
     beta = float(args.beta)
+if( args.floatType ):
+    if( args.floatType == 'double' ):
+        floatType = np.float64
 
 
 sizes = {}
