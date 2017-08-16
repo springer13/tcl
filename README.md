@@ -47,7 +47,7 @@ To install the python API you have to:
     python setup.py install
 
 At this point you can import the tcl module in your python scripts and call the
-tcl.tensorMult() function (see ./benchmark/python/ for further examples).
+tcl.tensorMult() function (see ./benchmark/python/benchmark.py for further examples).
 
 Keep in mind that TCL is a multi-threaded and performance critical library.
 Thus, it is of great importance that you follow the following steps before you

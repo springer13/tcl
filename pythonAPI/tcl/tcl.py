@@ -2,6 +2,7 @@ import numpy as np
 import ctypes
 from ctypes import cdll
 import os
+import random
 
 TCL_ROOT = ""
 try:
@@ -61,14 +62,21 @@ def tensorMult( alpha, A, indicesA, B, indicesB, beta,  C, indicesC):
                                                 dataB, sizeB, outerSizeB, indicesB,
                         ctypes.c_double(beta) , dataC, sizeC, outerSizeC, indicesC)
 
+def equal(A, B, numSamples=-1):
+    """ Ensures that alle elements of A and B are pretty much equal (due to limited machine precision) 
 
-def equal(A, B):
-    """ Ensures that alle elements of A and B are pretty much equal (due to limited machine precision) """
+    Parameter:
+    numSamples: number of random samples to compare (-1: all). This values is used to approximate this function and speed the result up."
+    """
     threshold = 1e-4
     A = np.reshape(A, A.size)
     B = np.reshape(B, B.size)
     error = 0
-    for i in range(A.size):
+    samples = range(A.size)
+    if( numSamples != -1 ):
+        samples = random.sample(samples, min(A.size,numSamples))
+
+    for i in samples:
       Aabs = abs(A[i]);
       Babs = abs(B[i]);
       absmax = max(Aabs, Babs);
