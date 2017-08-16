@@ -78,7 +78,7 @@ for i in range(5):
    C_ = np.einsum("%s,%s->%s"%(indA.replace(',',''),indB.replace(',',''),indC.replace(',','')), A, B)
    timeNP = min(time.time() - s, timeNP)
 
-print "%.2f GFLOPS %.2f GFLOPS speedup: %.2fx"%( gflops/timeTCL, gflops/timeNP, timeNP/ timeTCL)
-
 if( not tcl.equal(C, C_, 1000) ):
-    print "validation:" + FAIL + " failed!!!" + ENDC
+    print "ERROR: validation" + FAIL + " failed!!!" + ENDC
+else:
+    print "%.2f GFLOPS %.2f GFLOPS speedup: %.2fx"%( gflops/timeTCL, gflops/timeNP, timeNP/ timeTCL)
