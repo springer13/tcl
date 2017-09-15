@@ -1290,15 +1290,24 @@ void sTensorMult(const float alpha, const float *dataA, const long *sizeA, const
    std::vector<tcl::sizeType> sizeC_, outerSizeC_;
    for(int i=0; i < dimA; ++i){
       sizeA_.emplace_back(sizeA[i]);
-      outerSizeA_.emplace_back(outerSizeA[i]);
+      if( outerSizeA == nullptr )
+         outerSizeA_.emplace_back(sizeA[i]);
+      else
+         outerSizeA_.emplace_back(outerSizeA[i]);
    }
    for(int i=0; i < dimB; ++i){
       sizeB_.emplace_back(sizeB[i]);
-      outerSizeB_.emplace_back(outerSizeB[i]);
+      if( outerSizeB == nullptr )
+         outerSizeB_.emplace_back(sizeB[i]);
+      else
+         outerSizeB_.emplace_back(outerSizeB[i]);
    }
    for(int i=0; i < dimC; ++i){
       sizeC_.emplace_back(sizeC[i]);
-      outerSizeC_.emplace_back(outerSizeC[i]);
+      if( outerSizeC == nullptr )
+         outerSizeC_.emplace_back(sizeC[i]);
+      else
+         outerSizeC_.emplace_back(outerSizeC[i]);
    }
    std::vector<tcl::sizeType> offsets;
 
@@ -1326,15 +1335,24 @@ void dTensorMult(const double alpha, const double *dataA, const long *sizeA, con
    std::vector<tcl::sizeType> sizeC_, outerSizeC_;
    for(int i=0; i < dimA; ++i){
       sizeA_.emplace_back(sizeA[i]);
-      outerSizeA_.emplace_back(outerSizeA[i]);
+      if( outerSizeA == nullptr )
+         outerSizeA_.emplace_back(sizeA[i]);
+      else
+         outerSizeA_.emplace_back(outerSizeA[i]);
    }
    for(int i=0; i < dimB; ++i){
       sizeB_.emplace_back(sizeB[i]);
-      outerSizeB_.emplace_back(outerSizeB[i]);
+      if( outerSizeB == nullptr )
+         outerSizeB_.emplace_back(sizeB[i]);
+      else
+         outerSizeB_.emplace_back(outerSizeB[i]);
    }
    for(int i=0; i < dimC; ++i){
       sizeC_.emplace_back(sizeC[i]);
-      outerSizeC_.emplace_back(outerSizeC[i]);
+      if( outerSizeB == nullptr )
+         outerSizeC_.emplace_back(sizeC[i]);
+      else
+         outerSizeC_.emplace_back(outerSizeC[i]);
    }
    std::vector<tcl::sizeType> offsets;
 
