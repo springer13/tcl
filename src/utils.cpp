@@ -27,7 +27,7 @@
 namespace tcl
 { 
 
-   char* getErrorString( error err ){
+   const char* getErrorString( error err ){
       switch (err){
          case SUCCESS:
             return "SUCCESS";

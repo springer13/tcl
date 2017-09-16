@@ -52,15 +52,18 @@ def tensorMult( alpha, A, indicesA, B, indicesB, beta,  C, indicesC):
     indicesA = ctypes.c_char_p(indicesA)
     indicesB = ctypes.c_char_p(indicesB)
     indicesC = ctypes.c_char_p(indicesC)
+    useRowMajor = 0
+    if( A.flags['C_CONTIGUOUS'] ):
+        useRowMajor = 1
 
     if( A.itemsize == 4 ):
         lib.sTensorMult(ctypes.c_float(alpha), dataA, sizeA, outerSizeA, indicesA,
                                                dataB, sizeB, outerSizeB, indicesB,
-                        ctypes.c_float(beta) , dataC, sizeC, outerSizeC, indicesC)
+                        ctypes.c_float(beta) , dataC, sizeC, outerSizeC, indicesC, useRowMajor)
     else:
         lib.dTensorMult(ctypes.c_double(alpha), dataA, sizeA, outerSizeA, indicesA,
                                                 dataB, sizeB, outerSizeB, indicesB,
-                        ctypes.c_double(beta) , dataC, sizeC, outerSizeC, indicesC)
+                        ctypes.c_double(beta) , dataC, sizeC, outerSizeC, indicesC, useRowMajor)
 
 def equal(A, B, numSamples=-1):
     """ Ensures that alle elements of A and B are pretty much equal (due to limited machine precision) 

@@ -46,11 +46,11 @@ namespace tcl{
 extern "C"{
 void sTensorMult(const float alpha, const float *A, const long *sizeA, const long *outerSizeA, const char* indA,
                                     const float *B, const long *sizeB, const long *outerSizeB, const char* indB,
-                 const float beta ,       float *C, const long *sizeC, const long *outerSizeC, const char* indC);
+                 const float beta ,       float *C, const long *sizeC, const long *outerSizeC, const char* indC, const int useRowMajor = 0);
 
 void dTensorMult(const double alpha, const double *A, const long *sizeA, const long *outerSizeA, const char* indA,
                                      const double *B, const long *sizeB, const long *outerSizeB, const char* indB,
-                 const double beta ,       double *C, const long *sizeC, const long *outerSizeC, const char* indC);
+                 const double beta ,       double *C, const long *sizeC, const long *outerSizeC, const char* indC, const int useRowMajor = 0);
 
 void randomNumaAwareInit(float *data, const long *size, int dim);
 }

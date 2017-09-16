@@ -9,7 +9,7 @@ ENDC = '\033[0m'
 sizeA = []
 sizeB = []
 sizeC = []
-order = 'f'
+order = 'F' #'F': Fortran: Column-major; 'C' : C : row-major
 alpha = 1.0
 beta = 0.0
 floatType = np.float32
@@ -20,11 +20,14 @@ parser.add_argument('indA', metavar='indicesA', type=str, help="comma separated 
 parser.add_argument('indB', metavar='indicesB', type=str, help="comma separated list of characters, which denote the indices of B (e.g., 'a,u')")
 parser.add_argument('indC', metavar='indicesC', type=str, help="comma separated list of characters, which denote the indices of C (e.g., 'n,m,a')")
 parser.add_argument('sizes', metavar='sizes', type=str, help="<indice:size>,<indice:size>,... (e.g., a:100,b:200)")
+parser.add_argument('--useRowMajor', action='store_true', help="Uses a row-major data layout; by default we use column-major.")
 parser.add_argument('--floatType', metavar='floatType', type=str, help="float type can be either 'double' or 'float' (default)")
 parser.add_argument('--alpha', type=float, help='alpha scalar (default: 1.0)')
 parser.add_argument('--beta', type=float, help='beta scalar (default: 0.0)')
 
 args = parser.parse_args()
+if( args.useRowMajor):
+    order = 'C'
 if( args.alpha):
     alpha = float(args.alpha)
 if( args.beta):
@@ -32,7 +35,8 @@ if( args.beta):
 if( args.floatType ):
     if( args.floatType == 'double' ):
         floatType = np.float64
-
+    else:
+        floatType = np.float32
 
 sizes = {}
 gflops = 2./1e9
@@ -60,9 +64,9 @@ indC= indC[:-1]
 
 Ma = np.random.rand(2500**2).astype('f')
 Mb = np.random.rand(2500**2).astype('f')
-A = np.empty(sizeA, order='f', dtype=floatType)
-B = np.empty(sizeB, order='f', dtype=floatType)
-C = np.empty(sizeC, order='f', dtype=floatType)
+A = np.empty(sizeA, order=order, dtype=floatType)
+B = np.empty(sizeB, order=order, dtype=floatType)
+C = np.empty(sizeC, order=order, dtype=floatType)
 tcl.randomNumaAwareInit(A)
 tcl.randomNumaAwareInit(B)
 tcl.randomNumaAwareInit(C)

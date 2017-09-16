@@ -67,9 +67,10 @@ have to call a single function for any contraction: tcl::tensorMult(). Once you
 have specified the tensor contraction, TCL will _automatically_ map this tensor
 contraction to the most efficient kernel.
 
-TCL expects the data in a column-major data layout; thus, indices are stored
+TCL supports both column-major (default) and row-major data layouts. Column-major: indices are stored
 from left to right with the leftmost and rightmost index respectively being
-the fastest-varying (stride-1) index and the slowest-varying index.
+the fastest-varying (stride-1) index and the slowest-varying index; row-major: indices are stored
+from right to left.
 
 You can find an self-explanatory example under ./examples/contraction.cpp
 
@@ -101,11 +102,11 @@ TCL also provides a C interface:
 
     void sTensorMult(const float alpha, const float *A, const long *sizeA, const long *outerSizeA, const char* indA,
                                         const float *B, const long *sizeB, const long *outerSizeB, const char* indB,
-                     const float beta ,       float *C, const long *sizeC, const long *outerSizeC, const char* indC);
+                     const float beta ,       float *C, const long *sizeC, const long *outerSizeC, const char* indC, int useRowMajor = 0);
 
     void dTensorMult(const double alpha, const double *A, const long *sizeA, const long *outerSizeA, const char* indA,
                                          const double *B, const long *sizeB, const long *outerSizeB, const char* indB,
-                     const double beta ,       double *C, const long *sizeC, const long *outerSizeC, const char* indC);
+                     const double beta ,       double *C, const long *sizeC, const long *outerSizeC, const char* indC, int useRowMajor = 0);
 
 The outerSizes enable the user to operate on subtensors; the outerSize may be NULL, in that
 case a dense tensor with size=outerSize is assumed.

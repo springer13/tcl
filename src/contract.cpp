@@ -1276,12 +1276,17 @@ extern "C"
 {
 void sTensorMult(const float alpha, const float *dataA, const long *sizeA, const long *outerSizeA, const char* indA,
                                     const float *dataB, const long *sizeB, const long *outerSizeB, const char* indB,
-                 const float beta ,       float *dataC, const long *sizeC, const long *outerSizeC, const char* indC)
+                 const float beta ,       float *dataC, const long *sizeC, const long *outerSizeC, const char* indC, const int useRowMajor )
 {
    tcl::indicesType indicesA, indicesB, indicesC;
    tcl::split(std::string(indA), ',', indicesA);
    tcl::split(std::string(indB), ',', indicesB);
    tcl::split(std::string(indC), ',', indicesC);
+   if( useRowMajor ){
+      indicesA.reverse();
+      indicesB.reverse();
+      indicesC.reverse();
+   }
    int dimA = indicesA.size();
    int dimB = indicesB.size();
    int dimC = indicesC.size();
@@ -1289,25 +1294,34 @@ void sTensorMult(const float alpha, const float *dataA, const long *sizeA, const
    std::vector<tcl::sizeType> sizeB_, outerSizeB_;
    std::vector<tcl::sizeType> sizeC_, outerSizeC_;
    for(int i=0; i < dimA; ++i){
-      sizeA_.emplace_back(sizeA[i]);
+      int idx = i;
+      if( useRowMajor )
+         idx = dimA - i - 1;
+      sizeA_.emplace_back(sizeA[idx]);
       if( outerSizeA == nullptr )
-         outerSizeA_.emplace_back(sizeA[i]);
+         outerSizeA_.emplace_back(sizeA[idx]);
       else
-         outerSizeA_.emplace_back(outerSizeA[i]);
+         outerSizeA_.emplace_back(outerSizeA[idx]);
    }
    for(int i=0; i < dimB; ++i){
-      sizeB_.emplace_back(sizeB[i]);
+      int idx = i;
+      if( useRowMajor )
+         idx = dimB - i - 1;
+      sizeB_.emplace_back(sizeB[idx]);
       if( outerSizeB == nullptr )
-         outerSizeB_.emplace_back(sizeB[i]);
+         outerSizeB_.emplace_back(sizeB[idx]);
       else
-         outerSizeB_.emplace_back(outerSizeB[i]);
+         outerSizeB_.emplace_back(outerSizeB[idx]);
    }
    for(int i=0; i < dimC; ++i){
-      sizeC_.emplace_back(sizeC[i]);
+      int idx = i;
+      if( useRowMajor )
+         idx = dimC - i - 1;
+      sizeC_.emplace_back(sizeC[idx]);
       if( outerSizeC == nullptr )
-         outerSizeC_.emplace_back(sizeC[i]);
+         outerSizeC_.emplace_back(sizeC[idx]);
       else
-         outerSizeC_.emplace_back(outerSizeC[i]);
+         outerSizeC_.emplace_back(outerSizeC[idx]);
    }
    std::vector<tcl::sizeType> offsets;
 
@@ -1321,12 +1335,17 @@ void sTensorMult(const float alpha, const float *dataA, const long *sizeA, const
 
 void dTensorMult(const double alpha, const double *dataA, const long *sizeA, const long *outerSizeA, const char* indA,
                                      const double *dataB, const long *sizeB, const long *outerSizeB, const char* indB,
-                 const double beta ,       double *dataC, const long *sizeC, const long *outerSizeC, const char* indC)
+                 const double beta ,       double *dataC, const long *sizeC, const long *outerSizeC, const char* indC, const int useRowMajor )
 {
    tcl::indicesType indicesA, indicesB, indicesC;
    tcl::split(std::string(indA), ',', indicesA);
    tcl::split(std::string(indB), ',', indicesB);
    tcl::split(std::string(indC), ',', indicesC);
+   if( useRowMajor ){
+      indicesA.reverse();
+      indicesB.reverse();
+      indicesC.reverse();
+   }
    int dimA = indicesA.size();
    int dimB = indicesB.size();
    int dimC = indicesC.size();
@@ -1334,25 +1353,34 @@ void dTensorMult(const double alpha, const double *dataA, const long *sizeA, con
    std::vector<tcl::sizeType> sizeB_, outerSizeB_;
    std::vector<tcl::sizeType> sizeC_, outerSizeC_;
    for(int i=0; i < dimA; ++i){
-      sizeA_.emplace_back(sizeA[i]);
+      int idx = i;
+      if( useRowMajor )
+         idx = dimA - i - 1;
+      sizeA_.emplace_back(sizeA[idx]);
       if( outerSizeA == nullptr )
-         outerSizeA_.emplace_back(sizeA[i]);
+         outerSizeA_.emplace_back(sizeA[idx]);
       else
-         outerSizeA_.emplace_back(outerSizeA[i]);
+         outerSizeA_.emplace_back(outerSizeA[idx]);
    }
    for(int i=0; i < dimB; ++i){
-      sizeB_.emplace_back(sizeB[i]);
+      int idx = i;
+      if( useRowMajor )
+         idx = dimB - i - 1;
+      sizeB_.emplace_back(sizeB[idx]);
       if( outerSizeB == nullptr )
-         outerSizeB_.emplace_back(sizeB[i]);
+         outerSizeB_.emplace_back(sizeB[idx]);
       else
-         outerSizeB_.emplace_back(outerSizeB[i]);
+         outerSizeB_.emplace_back(outerSizeB[idx]);
    }
    for(int i=0; i < dimC; ++i){
-      sizeC_.emplace_back(sizeC[i]);
+      int idx = i;
+      if( useRowMajor )
+         idx = dimC - i - 1;
+      sizeC_.emplace_back(sizeC[idx]);
       if( outerSizeB == nullptr )
-         outerSizeC_.emplace_back(sizeC[i]);
+         outerSizeC_.emplace_back(sizeC[idx]);
       else
-         outerSizeC_.emplace_back(outerSizeC[i]);
+         outerSizeC_.emplace_back(outerSizeC[idx]);
    }
    std::vector<tcl::sizeType> offsets;
 
