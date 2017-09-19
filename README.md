@@ -126,8 +126,7 @@ Several examples can be found under ./benchmark/python/
 * Multi-threading support
 * TCL's current implementation is based on the
   Transpose-Transpose-GEMM-Transpose (TTGT) approach (see paper).
-* Support for single- and double-precision. Support for single- and
-  double-complex could be added easily.
+* Support for single- and double-precision as well as complex data types.
 
 
 # Performance Results

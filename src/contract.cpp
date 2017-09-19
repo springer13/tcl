@@ -1123,7 +1123,7 @@ namespace tcl
 
       int numParallelizableLoops = mIndices.size() + nIndices.size() + loopIndices.size();
       if( numParallelizableLoops >= 2 )
-         if( beta == 0)
+         if( std::abs(beta) < getZeroThreshold<floatType>())
             freeLoops<floatType, 2, 1>(alpha, stridesA, A->getData(), 
                   stridesB, B->getData(), 
                   beta,  stridesC, C->getData(), 
@@ -1134,7 +1134,7 @@ namespace tcl
                   beta,  stridesC, C->getData(), 
                   sizes, numParallelizableLoops, kIndices.size(), 0);
       else if( numParallelizableLoops == 1 )
-         if( beta == 0)
+         if( std::abs(beta) < getZeroThreshold<floatType>())
             freeLoops<floatType, 1, 1>(alpha, stridesA, A->getData(), 
                   stridesB, B->getData(), 
                   beta,  stridesC, C->getData(), 
@@ -1145,7 +1145,7 @@ namespace tcl
                   beta,  stridesC, C->getData(), 
                   sizes, numParallelizableLoops, kIndices.size(), 0);
       else
-         if( beta == 0)
+         if( std::abs(beta) < getZeroThreshold<floatType>())
             freeLoops<floatType, 0, 1>(alpha, stridesA, A->getData(), 
                   stridesB, B->getData(), 
                   beta,  stridesC, C->getData(), 
@@ -1258,18 +1258,24 @@ namespace tcl
    } 
 
    template error contract<float>(const float alpha, const Tensor<float> *A, const Tensor<float> *B,  const float beta, Tensor<float> *C);
-
    template error contractTTGT<float>(const float alpha, const Tensor<float> *A, const Tensor<float> *B,  const float beta, Tensor<float> *C);
-
    template error tensorMult<float>(const float alpha, const Tensor<float> *A, const Tensor<float> *B, 
                                     const float beta,        Tensor<float> *C);
 
    template error contract<double>(const double alpha, const Tensor<double> *A, const Tensor<double> *B,  const double beta, Tensor<double> *C);
-
    template error contractTTGT<double>(const double alpha, const Tensor<double> *A, const Tensor<double> *B,  const double beta, Tensor<double> *C);
-
    template error tensorMult<double>(const double alpha, const Tensor<double> *A, const Tensor<double> *B, 
-                                    const double beta,        Tensor<double> *C);
+                                     const double beta,        Tensor<double> *C);
+
+   template error contract<FloatComplex>(const FloatComplex alpha, const Tensor<FloatComplex> *A, const Tensor<FloatComplex> *B,  const FloatComplex beta, Tensor<FloatComplex> *C);
+   template error contractTTGT<FloatComplex>(const FloatComplex alpha, const Tensor<FloatComplex> *A, const Tensor<FloatComplex> *B,  const FloatComplex beta, Tensor<FloatComplex> *C);
+   template error tensorMult<FloatComplex>(const FloatComplex alpha, const Tensor<FloatComplex> *A, const Tensor<FloatComplex> *B, 
+                                     const FloatComplex beta,        Tensor<FloatComplex> *C);
+
+   template error contract<DoubleComplex>(const DoubleComplex alpha, const Tensor<DoubleComplex> *A, const Tensor<DoubleComplex> *B,  const DoubleComplex beta, Tensor<DoubleComplex> *C);
+   template error contractTTGT<DoubleComplex>(const DoubleComplex alpha, const Tensor<DoubleComplex> *A, const Tensor<DoubleComplex> *B,  const DoubleComplex beta, Tensor<DoubleComplex> *C);
+   template error tensorMult<DoubleComplex>(const DoubleComplex alpha, const Tensor<DoubleComplex> *A, const Tensor<DoubleComplex> *B, 
+                                     const DoubleComplex beta,        Tensor<DoubleComplex> *C);
 }
 
 extern "C"
@@ -1389,6 +1395,124 @@ void dTensorMult(const double alpha, const double *dataA, const long *sizeA, con
    tcl::Tensor<double> C( sizeC_,                    dataC , outerSizeC_, indicesC, offsets);
 
    if( tcl::tensorMult(alpha, &A, &B, beta, &C) != tcl::SUCCESS )
+     printf("[TCL] ERROR: some error occured in tensorMult()\n"); 
+}
+
+void cTensorMult(const float _Complex alpha, const float _Complex *dataA, const long *sizeA, const long *outerSizeA, const char* indA,
+                                     const float _Complex *dataB, const long *sizeB, const long *outerSizeB, const char* indB,
+                 const float _Complex beta ,       float _Complex *dataC, const long *sizeC, const long *outerSizeC, const char* indC, const int useRowMajor )
+{
+   tcl::indicesType indicesA, indicesB, indicesC;
+   tcl::split(std::string(indA), ',', indicesA);
+   tcl::split(std::string(indB), ',', indicesB);
+   tcl::split(std::string(indC), ',', indicesC);
+   if( useRowMajor ){
+      indicesA.reverse();
+      indicesB.reverse();
+      indicesC.reverse();
+   }
+   int dimA = indicesA.size();
+   int dimB = indicesB.size();
+   int dimC = indicesC.size();
+   std::vector<tcl::sizeType> sizeA_, outerSizeA_;
+   std::vector<tcl::sizeType> sizeB_, outerSizeB_;
+   std::vector<tcl::sizeType> sizeC_, outerSizeC_;
+   for(int i=0; i < dimA; ++i){
+      int idx = i;
+      if( useRowMajor )
+         idx = dimA - i - 1;
+      sizeA_.emplace_back(sizeA[idx]);
+      if( outerSizeA == nullptr )
+         outerSizeA_.emplace_back(sizeA[idx]);
+      else
+         outerSizeA_.emplace_back(outerSizeA[idx]);
+   }
+   for(int i=0; i < dimB; ++i){
+      int idx = i;
+      if( useRowMajor )
+         idx = dimB - i - 1;
+      sizeB_.emplace_back(sizeB[idx]);
+      if( outerSizeB == nullptr )
+         outerSizeB_.emplace_back(sizeB[idx]);
+      else
+         outerSizeB_.emplace_back(outerSizeB[idx]);
+   }
+   for(int i=0; i < dimC; ++i){
+      int idx = i;
+      if( useRowMajor )
+         idx = dimC - i - 1;
+      sizeC_.emplace_back(sizeC[idx]);
+      if( outerSizeB == nullptr )
+         outerSizeC_.emplace_back(sizeC[idx]);
+      else
+         outerSizeC_.emplace_back(outerSizeC[idx]);
+   }
+   std::vector<tcl::sizeType> offsets;
+
+   tcl::Tensor<tcl::FloatComplex> A( sizeA_, const_cast<tcl::FloatComplex*>((const tcl::FloatComplex*)dataA), outerSizeA_, indicesA, offsets);
+   tcl::Tensor<tcl::FloatComplex> B( sizeB_, const_cast<tcl::FloatComplex*>((const tcl::FloatComplex*)dataB), outerSizeB_, indicesB, offsets);
+   tcl::Tensor<tcl::FloatComplex> C( sizeC_,           (tcl::FloatComplex*) dataC , outerSizeC_, indicesC, offsets);
+
+   if( tcl::tensorMult((const tcl::FloatComplex) alpha, &A, &B, (const tcl::FloatComplex)beta, &C) != tcl::SUCCESS )
+     printf("[TCL] ERROR: some error occured in tensorMult()\n"); 
+}
+
+void zTensorMult(const double _Complex alpha, const double _Complex *dataA, const long *sizeA, const long *outerSizeA, const char* indA,
+                                     const double _Complex *dataB, const long *sizeB, const long *outerSizeB, const char* indB,
+                 const double _Complex beta ,       double _Complex *dataC, const long *sizeC, const long *outerSizeC, const char* indC, const int useRowMajor )
+{
+   tcl::indicesType indicesA, indicesB, indicesC;
+   tcl::split(std::string(indA), ',', indicesA);
+   tcl::split(std::string(indB), ',', indicesB);
+   tcl::split(std::string(indC), ',', indicesC);
+   if( useRowMajor ){
+      indicesA.reverse();
+      indicesB.reverse();
+      indicesC.reverse();
+   }
+   int dimA = indicesA.size();
+   int dimB = indicesB.size();
+   int dimC = indicesC.size();
+   std::vector<tcl::sizeType> sizeA_, outerSizeA_;
+   std::vector<tcl::sizeType> sizeB_, outerSizeB_;
+   std::vector<tcl::sizeType> sizeC_, outerSizeC_;
+   for(int i=0; i < dimA; ++i){
+      int idx = i;
+      if( useRowMajor )
+         idx = dimA - i - 1;
+      sizeA_.emplace_back(sizeA[idx]);
+      if( outerSizeA == nullptr )
+         outerSizeA_.emplace_back(sizeA[idx]);
+      else
+         outerSizeA_.emplace_back(outerSizeA[idx]);
+   }
+   for(int i=0; i < dimB; ++i){
+      int idx = i;
+      if( useRowMajor )
+         idx = dimB - i - 1;
+      sizeB_.emplace_back(sizeB[idx]);
+      if( outerSizeB == nullptr )
+         outerSizeB_.emplace_back(sizeB[idx]);
+      else
+         outerSizeB_.emplace_back(outerSizeB[idx]);
+   }
+   for(int i=0; i < dimC; ++i){
+      int idx = i;
+      if( useRowMajor )
+         idx = dimC - i - 1;
+      sizeC_.emplace_back(sizeC[idx]);
+      if( outerSizeB == nullptr )
+         outerSizeC_.emplace_back(sizeC[idx]);
+      else
+         outerSizeC_.emplace_back(outerSizeC[idx]);
+   }
+   std::vector<tcl::sizeType> offsets;
+
+   tcl::Tensor<tcl::DoubleComplex> A( sizeA_, const_cast<tcl::DoubleComplex*>((const tcl::DoubleComplex*)dataA), outerSizeA_, indicesA, offsets);
+   tcl::Tensor<tcl::DoubleComplex> B( sizeB_, const_cast<tcl::DoubleComplex*>((const tcl::DoubleComplex*)dataB), outerSizeB_, indicesB, offsets);
+   tcl::Tensor<tcl::DoubleComplex> C( sizeC_,           (tcl::DoubleComplex*) dataC , outerSizeC_, indicesC, offsets);
+
+   if( tcl::tensorMult((const tcl::DoubleComplex) alpha, &A, &B, (const tcl::DoubleComplex)beta, &C) != tcl::SUCCESS )
      printf("[TCL] ERROR: some error occured in tensorMult()\n"); 
 }
 

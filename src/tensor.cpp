@@ -150,5 +150,7 @@ namespace tcl
 
    template class Tensor<float>;
    template class Tensor<double>;
+   template class Tensor<FloatComplex>;
+   template class Tensor<DoubleComplex>;
 }
 

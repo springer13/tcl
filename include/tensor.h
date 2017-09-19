@@ -40,7 +40,7 @@
 
 #include <omp.h>
 
-#include "types.h"
+#include "tcl_types.h"
 #include "utils.h"
 
 namespace tcl{

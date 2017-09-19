@@ -32,7 +32,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "types.h"
+#include "tcl_types.h"
 #include "tensor.h"
 
 namespace tcl{
@@ -51,6 +51,14 @@ void sTensorMult(const float alpha, const float *A, const long *sizeA, const lon
 void dTensorMult(const double alpha, const double *A, const long *sizeA, const long *outerSizeA, const char* indA,
                                      const double *B, const long *sizeB, const long *outerSizeB, const char* indB,
                  const double beta ,       double *C, const long *sizeC, const long *outerSizeC, const char* indC, const int useRowMajor = 0);
+
+void cTensorMult(const float _Complex alpha, const float _Complex *A, const long *sizeA, const long *outerSizeA, const char* indA,
+                                            const float _Complex *B, const long *sizeB, const long *outerSizeB, const char* indB,
+                 const float _Complex beta ,       float _Complex *C, const long *sizeC, const long *outerSizeC, const char* indC, const int useRowMajor = 0);
+
+void zTensorMult(const double _Complex alpha, const double _Complex *A, const long *sizeA, const long *outerSizeA, const char* indA,
+                                            const double _Complex *B, const long *sizeB, const long *outerSizeB, const char* indB,
+                 const double _Complex beta ,       double _Complex *C, const long *sizeC, const long *outerSizeC, const char* indC, const int useRowMajor = 0);
 
 void randomNumaAwareInit(float *data, const long *size, int dim);
 }

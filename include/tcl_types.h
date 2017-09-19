@@ -22,6 +22,8 @@
 #include <cstddef>
 #include <vector>
 #include <string>
+#include <complex>
+#include <complex.h>
 #include <list>
 
 namespace tcl
@@ -29,6 +31,9 @@ namespace tcl
 
    typedef int sizeType;
    typedef std::list<std::string> indicesType;
+
+   using FloatComplex = std::complex<float>;
+   using DoubleComplex = std::complex<double>;
 
    enum error { 
       SUCCESS = 0, 

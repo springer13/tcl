@@ -101,4 +101,34 @@ namespace tcl
             alpha, a, lda, b, ldb,
             beta, c, ldc);
    }
+
+   template<> 
+   void gemm<FloatComplex>(const char *transa, const char *transb,
+         const sizeType *m, const sizeType *n, const sizeType *k,
+         const FloatComplex *alpha, const FloatComplex *a,
+         const sizeType *lda, const FloatComplex *b, const sizeType *ldb,
+         const FloatComplex *beta, FloatComplex *c, const sizeType *ldc)
+   {
+#ifdef DEBUG
+      std::cout<< "GEMM: " << transa+'\0' << " "<< transb+'\0' << " "<< *m << " " << *n << " " << *k << std::endl;
+#endif
+      cgemm_(transa, transb, m, n, k,
+            (const float _Complex*) alpha, (const float _Complex*)a, lda, (const float _Complex*)b, ldb,
+            (const float _Complex*) beta, (float _Complex*)c, ldc);
+   }
+
+   template<> 
+   void gemm<DoubleComplex>(const char *transa, const char *transb,
+         const sizeType *m, const sizeType *n, const sizeType *k,
+         const DoubleComplex *alpha, const DoubleComplex *a,
+         const sizeType *lda, const DoubleComplex *b, const sizeType *ldb,
+         const DoubleComplex *beta, DoubleComplex *c, const sizeType *ldc)
+   {
+#ifdef DEBUG
+      std::cout<< "GEMM: " << transa+'\0' << " "<< transb+'\0' << " "<< *m << " " << *n << " " << *k << std::endl;
+#endif
+      zgemm_(transa, transb, m, n, k,
+            (const double _Complex*) alpha, (const double _Complex*)a, lda, (const double _Complex*)b, ldb,
+            (const double _Complex*) beta, (double _Complex*)c, ldc);
+   }
 }

@@ -25,7 +25,7 @@
 #include <vector>
 #include <list>
 
-#include "types.h"
+#include "tcl_types.h"
 
 extern "C"
 {
@@ -39,10 +39,31 @@ extern "C"
          const double *alpha, const double *a,
          const int *lda, const double *b, const int *ldb,
          const double *beta, double *c, const int *ldc);
+   void cgemm_(const char *transa, const char *transb,
+         const int *m, const int *n, const int *k,
+         const float _Complex *alpha, const float _Complex *a,
+         const int *lda, const float _Complex *b, const int *ldb,
+         const float _Complex *beta, float _Complex *c, const int *ldc);
+   void zgemm_(const char *transa, const char *transb,
+         const int *m, const int *n, const int *k,
+         const double _Complex *alpha, const double _Complex *a,
+         const int *lda, const double _Complex *b, const int *ldb,
+         const double _Complex *beta, double _Complex *c, const int *ldc);
 }
 
 namespace tcl
 {
+
+   template<typename floatType>
+   static double getZeroThreshold();
+   template<>
+   double getZeroThreshold<double>() { return 1e-16;}
+   template<>
+   double getZeroThreshold<DoubleComplex>() { return 1e-16;}
+   template<>
+   double getZeroThreshold<float>() { return 1e-6;}
+   template<>
+   double getZeroThreshold<FloatComplex>() { return 1e-6;}
 
    const char* getErrorString( error err );
 
