@@ -134,7 +134,7 @@ Several examples can be found under ./benchmark/python/
 ![hptt](https://github.com/springer13/tcl/blob/master/misc/tcl_speedup.png)
 
 The above Figure presents the speedup of TCL over the best 
-reference among multiple state-of-the-art implementations (i.e., [Eigen](eigen.tuxfamily.org), 
+reference among multiple state-of-the-art implementations (i.e., [Eigen](http://eigen.tuxfamily.org), 
 [Tensor Toolbox](http://www.sandia.gov/~tgkolda/TensorToolbox), [NumPy](http://www.numpy.org/), [ITensor](http://itensor.org/)) for 1000 random tensor contractions running on a two
 socket Intel Haswell-EP E5-2680 v3 utilizing 24 threads. The cases are sorted with respect to the arithmetic
 intensity of an equally-sized matrix-matrix multiplication. 
