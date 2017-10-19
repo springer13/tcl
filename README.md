@@ -131,15 +131,19 @@ Several examples can be found under ./benchmark/python/
 
 # Performance Results
 
-Here are some preliminary performance (more will be added soon).
+![hptt](https://github.com/springer13/tcl/blob/master/misc/tcl_speedup.png)
 
-* Single-threaded Intel Haswell-EP E5-2680 v3
+The above Figure presents the speedup of TCL over the best 
+reference among multiple state-of-the-art implementations (i.e., [Eigen](eigen.tuxfamily.org), 
+[Tensor Toolbox](http://www.sandia.gov/~tgkolda/TensorToolbox), [NumPy](http://www.numpy.org/), [ITensor](http://itensor.org/)) for 1000 random tensor contractions running on a two
+socket Intel Haswell-EP E5-2680 v3 utilizing 24 threads. The cases are sorted with respect to the arithmetic
+intensity of an equally-sized matrix-matrix multiplication. 
 
-![hptt](https://github.com/springer13/tcl/blob/master/misc/tcl_1thread.png)
+We make the following observations: 
 
-* Multi-threaded 2x Intel Haswell-EP E5-2680 v3 (24 threads)
-
-![hptt](https://github.com/springer13/tcl/blob/master/misc/tcl_24thread.png)
+* All speedups are well above 1.0x; phrased differently, TCL exhibits positive speedups across all 1000 random tensor contractions. 
+* The speedups are especially high for tensor contractions with a low arithmetic intensity (left side of the plot), reaching up to 18x. 
+* The speedups decrease with increasing arithmetic intensity, this is due to the fact that the runtime of those contractions is dominated by a large GEMM, thus attaining close to the theoretical peak floating-point performance of the CPU.
 
 You can run your own benchmarks via:
 
@@ -168,10 +172,10 @@ article [(pdf)](https://arxiv.org/abs/1607.00145):
 ```
 @article{tccg2016a,
    author      = {Paul Springer and Paolo Bientinesi},
-   title       = {{Design of a high-performance GEMM-like Tensor-Tensor Multiplication}},
+   title       = {{Design of a {H}igh-{P}erformance {GEMM}-like {T}ensor-{T}ensor {M}ultiplication}},
    archivePrefix = "arXiv",
    eprint = {1607.00145},
-   primaryClass = "quant-ph",
+   primaryClass = {cs.MS, cs.PF},
    journal     = {CoRR},
    year        = {2016},
    issue_date  = {July 2016},

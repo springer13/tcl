@@ -71,21 +71,56 @@ tcl.randomNumaAwareInit(A)
 tcl.randomNumaAwareInit(B)
 tcl.randomNumaAwareInit(C)
 
+
+indC_np = ""
+axesA = []
+axesB = []
+for idx in args.indA.split(","):
+    found = 0
+    posB = indB.replace(',','').find(idx)
+    posA = indA.replace(',','').find(idx)
+    if( posB != -1 ): #contracted index
+        axesA.append(posA)
+        axesB.append(posB)
+    for idxB in args.indB.split(","):
+        if idxB == idx:
+            found = 1
+    if( not found ):
+        indC_np += idx
+for idx in args.indB.split(","):
+    found = 0
+    for idxB in args.indA.split(","):
+        if idxB == idx:
+            found = 1
+    if( not found ):
+        indC_np += idx
+perm = []
+for idx in indC.replace(',',''):
+    perm.append(indC_np.find(idx))
+#print indA, indB, indC_np, indC.replace(',','')
+#print perm, axesA,axesB
+
 timeTCL = 1e100
-for i in range(5):
+for i in range(3):
    Mb = Ma *1.1 +  Mb #trash cache
    s = time.time()
    tcl.tensorMult( alpha, A, indA, B, indB, beta, C, indC)
    timeTCL = min(timeTCL, time.time() - s)
 timeNP = 1e100
 
-for i in range(5):
+for i in range(3):
    Mb = Ma *1.1 +  Mb #trash cache
    s = time.time()
-   C_ = np.einsum("%s,%s->%s"%(indA.replace(',',''),indB.replace(',',''),indC.replace(',','')), A, B)
+   #C_ = np.einsum("%s,%s->%s"%(indA.replace(',',''),indB.replace(',',''),indC.replace(',','')), A, B)
+   if( indC.replace(',','') != indC_np ): #transpose required
+       C_ = np.transpose(np.tensordot(A, B, axes=(axesA,axesB)),perm).copy(order=order)
+   else:
+       C_ = np.tensordot(A, B, axes=(axesA,axesB))
    timeNP = min(time.time() - s, timeNP)
 
 if( not tcl.equal(C, C_, 1000) ):
     print "ERROR: validation" + FAIL + " failed!!!" + ENDC
+    print indC.replace(',','') != indC_np #transpose required
 else:
     print "%.2f GFLOPS %.2f GFLOPS speedup: %.2fx"%( gflops/timeTCL, gflops/timeNP, timeNP/ timeTCL)
+    print indC.replace(',','') != indC_np #transpose required
