@@ -10,10 +10,15 @@ are a generalization of the matrix-matrix multiplication to higher
 dimensions. For instance, A[i,k], B[k,j] and C[i,j] denote two-dimensional
 tensors (i.e., matrices) and C[i,j] = A[i,k] * B[k,j] represents a tensor
 contraction where the sum over 'k' as well as the loops over 'i' and 'j' are
-implicit. Further examples of tensor contractions are: C[i0,j0,j1] = A[i0,k0] * B[j1,k0,j0];
-C[i0,j0,j1,i1] = A[i0,k0,i1] * B[j1,k0,j0]; C[i0,j0,j1,i1] = A[k0,i0,k1,i1] * B[k1,j1,k0,j0] ...
+implicit. Further examples of tensor contractions are: 
 
-You can find additional information on tensor contractions in the paper listed
+* C[i0,j0,j1] = A[i0,k0] * B[j1,k0,j0]
+* C[i0,j0,j1,i1] = A[i0,k0,i1] * B[j1,k0,j0]
+* C[i0,j0,j1,i1] = A[k0,i0,k1,i1] * B[k1,j1,k0,j0]
+* C[i1,j1,j0,i0] = A[k0,i0,k1,k2,i1] * B[k1,j1,k0,j0,k2]
+* ...
+
+You can find additional information on tensor contractions in the [paper](https://arxiv.org/abs/1607.00145) listed
 below.
 
 # Requirements
