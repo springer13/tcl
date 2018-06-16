@@ -28,7 +28,7 @@ namespace tcl
 
    void MemoryBroker::alloc( size_t size )
    {
-      posix_memalign((void**)&(this->ptr), 4096, size);
+      int dummy = posix_memalign((void**)&(this->ptr), 4096, size);
       this->totalSize = size;
       this->currentOffset = 0;
    }

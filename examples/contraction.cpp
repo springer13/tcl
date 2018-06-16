@@ -30,9 +30,9 @@ int main(int argc, char** argv)
    tcl::sizeType l1 = 6;
 
    float *dataA, *dataB, *dataC;
-   posix_memalign((void**) &dataA, 64, sizeof(float) * k2*m*k1*l1);
-   posix_memalign((void**) &dataB, 64, sizeof(float) * n*k2*k1*l1);
-   posix_memalign((void**) &dataC, 64, sizeof(float) * m*n*l1);
+   posix_memalign((void**) &dataA, 64, sizeof(float) * ((size_t)k2)*m*k1*l1);
+   posix_memalign((void**) &dataB, 64, sizeof(float) * ((size_t)n)*k2*k1*l1);
+   posix_memalign((void**) &dataC, 64, sizeof(float) * ((size_t)m)*n*l1);
 
    // Initialize tensors (data is not owned by the tensors)
    tcl::Tensor<float> A({k1,m,k2,l1}, dataA);

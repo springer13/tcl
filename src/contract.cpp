@@ -211,9 +211,9 @@ namespace tcl
          indices.emplace_back(x);
    }
 
-   void getBestTTGTCandidate(const indicesType &indicesA, const sizeType totalSizeA, 
-                                      const indicesType &indicesB, const sizeType totalSizeB,
-                                      const indicesType &indicesC, const sizeType totalSizeC,
+   void getBestTTGTCandidate(const indicesType &indicesA, const size_t totalSizeA, 
+                                      const indicesType &indicesB, const size_t totalSizeB,
+                                      const indicesType &indicesC, const size_t totalSizeC,
                                       const indicesType &loopIndices,
                                       const indicesType &mIndices,
                                       const indicesType &nIndices,
@@ -578,7 +578,7 @@ namespace tcl
          printVector(candidate.indicesA, "A");
          printVector(candidate.indicesB, "B");
          printVector(candidate.indicesC, "C");
-         printf("%d %d %d %d %d %d\n", totalSizeA, totalSizeB, totalSizeC, candidate.transA, candidate.transB, candidate.interchangeAB);
+         printf("%ld %ld %ld %d %d %d\n", totalSizeA, totalSizeB, totalSizeC, candidate.transA, candidate.transB, candidate.interchangeAB);
          exit(-1);
       }
 #endif
@@ -664,9 +664,9 @@ namespace tcl
       if( mIndices.size() <= 0 || nIndices.size() <= 0 || kIndices.size() <= 0 ) // TTGT is not applicable; use fallback
          return contract(alpha, A, B, beta, C);
 
-      sizeType totalSizeA = A->getTotalSize() * sizeof(floatType);
-      sizeType totalSizeB = B->getTotalSize() * sizeof(floatType);
-      sizeType totalSizeC = C->getTotalSize() * sizeof(floatType);
+      auto totalSizeA = A->getTotalSize() * sizeof(floatType);
+      auto totalSizeB = B->getTotalSize() * sizeof(floatType);
+      auto totalSizeC = C->getTotalSize() * sizeof(floatType);
       TTGTCandidate candidate;
 
       if( loopIndices.size() > 0 )
@@ -698,7 +698,7 @@ namespace tcl
       auto permB = getPermutation(indicesB, candidate.indicesB);
       auto permC = getPermutation(candidate.indicesC, indicesC);
 
-      sizeType requestedSize = 0;
+      size_t requestedSize = 0;
       if( !isIdentity(permA) )
          requestedSize += totalSizeA;
       if( !isIdentity(permB) )

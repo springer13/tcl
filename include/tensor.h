@@ -95,7 +95,7 @@ namespace tcl{
           * Calculate the product of the sizes of the indices specified by 'indices'
           * \return Product of the sizes of the specified indices
           */
-         sizeType getTotalSize( const indicesType &indices = {} ) const; 
+         size_t getTotalSize( const indicesType &indices = {} ) const; 
 
          /**
           * \return The stride of the specified index

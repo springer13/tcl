@@ -59,9 +59,9 @@ namespace tcl
    }
 
    template<typename floatType>
-   sizeType Tensor<floatType>::getTotalSize( const indicesType &indices ) const
+   size_t Tensor<floatType>::getTotalSize( const indicesType &indices ) const
    {
-      sizeType product = 1;
+      size_t product = 1;
       if( indices.size() == 0 )
       {
          for(int i=0; i < _size.size(); ++i)
@@ -131,8 +131,10 @@ namespace tcl
          _offsets = std::vector<sizeType>(_size.size(),0);
 
       if( _data == nullptr ){
-         sizeType totalSize = std::accumulate(_outerSize.begin(), _outerSize.end(), 1, std::multiplies<sizeType>());
-         posix_memalign((void**) &_data, 64, sizeof(floatType) * totalSize);
+         size_t totalSize = 1;
+         for(auto s : _outerSize)
+				totalSize *= s;
+         int dummy = posix_memalign((void**) &_data, 64, sizeof(floatType) * totalSize);
       }
    } 
 

@@ -37,8 +37,8 @@ class MemoryBroker {
    private:
 
       char *ptr;
-      uint64_t totalSize;
-      uint64_t currentOffset;
+      size_t totalSize;
+      size_t currentOffset;
 };
 
 }
