@@ -8,7 +8,7 @@ TCL_ROOT = ""
 try:
     TCL_ROOT = os.environ['TCL_ROOT']
 except:
-    print "[TCL] ERROR: TCL_ROOT environment variable is not set. Point TCL_ROOT to the folder which includes TCL_ROOT/lib/libtcl.so"
+    print("[TCL] ERROR: TCL_ROOT environment variable is not set. Point TCL_ROOT to the folder which includes TCL_ROOT/lib/libtcl.so")
     exit(-1)
 
 # load TCL library
@@ -49,6 +49,9 @@ def tensorMult( alpha, A, indicesA, B, indicesB, beta,  C, indicesC):
     dataC = ctypes.c_void_p(C.ctypes.data)
     sizeC = ctypes.cast(C.ctypes.shape, ctypes.POINTER(ctypes.c_voidp))
     outerSizeC = sizeC
+    indicesA = indicesA.encode('utf-8')
+    indicesB = indicesB.encode('utf-8')
+    indicesC = indicesC.encode('utf-8')
     indicesA = ctypes.c_char_p(indicesA)
     indicesB = ctypes.c_char_p(indicesB)
     indicesC = ctypes.c_char_p(indicesC)
@@ -75,7 +78,7 @@ def equal(A, B, numSamples=-1):
     A = np.reshape(A, A.size)
     B = np.reshape(B, B.size)
     error = 0
-    samples = range(A.size)
+    samples = list(range(A.size))
     if( numSamples != -1 ):
         samples = random.sample(samples, min(A.size,numSamples))
 
