@@ -60,14 +60,24 @@ def tensorMult( alpha, A, indicesA, B, indicesB, beta,  C, indicesC):
     if( A.flags['C_CONTIGUOUS'] ):
         useRowMajor = 1
 
-    if( A.itemsize == 4 ):
+    if( A.dtype == np.float32 ):
         lib.sTensorMult(ctypes.c_float(alpha), dataA, sizeA, outerSizeA, indicesA,
                                                dataB, sizeB, outerSizeB, indicesB,
                         ctypes.c_float(beta) , dataC, sizeC, outerSizeC, indicesC, useRowMajor)
-    else:
+    elif( A.dtype == np.float64 ):
         lib.dTensorMult(ctypes.c_double(alpha), dataA, sizeA, outerSizeA, indicesA,
                                                 dataB, sizeB, outerSizeB, indicesB,
                         ctypes.c_double(beta) , dataC, sizeC, outerSizeC, indicesC, useRowMajor)
+    elif( A.dtype == np.complex64 ):
+        lib.cTensorMult(ctypes.c_float(alpha), dataA, sizeA, outerSizeA, indicesA,
+                                               dataB, sizeB, outerSizeB, indicesB,
+                        ctypes.c_float(beta), dataC, sizeC, outerSizeC, indicesC, useRowMajor)
+    elif( A.dtype == np.complex128 ):
+        lib.zTensorMult(ctypes.c_double(alpha), dataA, sizeA, outerSizeA, indicesA,
+                                                dataB, sizeB, outerSizeB, indicesB,
+                        ctypes.c_double(beta) , dataC, sizeC, outerSizeC, indicesC, useRowMajor)
+    else:
+        raise NotImplementedError
 
 def equal(A, B, numSamples=-1):
     """ Ensures that alle elements of A and B are pretty much equal (due to limited machine precision)
@@ -110,25 +120,21 @@ def einsum(string, *arg_list):
     else:
         T_a, T_b = arg_list
 
-    if np.isfortran(T_a) or np.isfortran(T_b):
-        print("encounter F_array")
-        # raise
-
+    if np.isfortran(T_a) and np.isfortran(T_b):
+        order = 'F'
         # or do np.asfortranarray(T_a) (T_b) order ='F'
         # see also https://stackoverflow.com/questions/27567876/copying-array-changes-data-from-c-contiguous-to-f-contiguous
+    else:
+        # There is some situation when T is not Contiguous nor Fortan
+        T_a = np.ascontiguousarray(T_a)
+        T_b = np.ascontiguousarray(T_b)
+        order = 'C'
 
-    # There is some situation when T is not Contiguous nor Fortan
-    T_a = np.ascontiguousarray(T_a)
-    T_b = np.ascontiguousarray(T_b)
-
-    order = 'C'
     # [TODO] benchmark whether 'C', 'F' affect the result
+
+    # [TODO] casting to higher precesion data type?
     floatType = T_a.dtype
     if floatType != T_b.dtype:
-        raise
-
-    if floatType in [np.complex64, np.complex128]:
-        print("complex is not supproted")
         raise NotImplementedError
 
     np_indA, np_indB, np_indC = re.split(' , | ,|, |,|->', string)
@@ -150,7 +156,13 @@ def einsum(string, *arg_list):
     indC = ','.join(list(np_indC))
     sizeC = [sizes[idx] for idx in np_indC]
 
-    T_c = np.empty(sizeC, order=order, dtype=floatType)
+    # For most case this is enough.
+    # T_c = np.empty(sizeC, order=order, dtype=floatType)
+    # However, it seems like for complex datatype, we need to zeros out T_c
+    # such that it would not return wierd value.
+    # This should be because of the interface in tensorMult is not written
+    # for complex datatype
+    T_c = np.zeros(sizeC, order=order, dtype=floatType)
 
     tensorMult(1, T_a, indA, T_b, indB, 0., T_c, indC)
     return T_c
