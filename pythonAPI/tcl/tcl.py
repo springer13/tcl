@@ -3,6 +3,7 @@ import ctypes
 from ctypes import cdll
 import os
 import random
+import re
 
 TCL_ROOT = ""
 try:
@@ -15,10 +16,10 @@ except:
 lib = cdll.LoadLibrary(TCL_ROOT+"/lib/libtcl.so")
 
 def randomNumaAwareInit( A ):
-    """ 
+    """
     initializes the passed numpy.ndarray (which have to be created with
     numpy.empty) and initializes it with random data in paralle such that the
-    pages are equally distributed among the numa nodes 
+    pages are equally distributed among the numa nodes
     """
     lib.randomNumaAwareInit( ctypes.c_void_p(A.ctypes.data),
             ctypes.cast(A.ctypes.shape, ctypes.POINTER(ctypes.c_voidp)),
@@ -26,9 +27,9 @@ def randomNumaAwareInit( A ):
 
 
 def tensorMult( alpha, A, indicesA, B, indicesB, beta,  C, indicesC):
-    """ 
+    """
         This function computes the tensor contraction of A and B, yielding C.
-        The tensor contraction is of the form: 
+        The tensor contraction is of the form:
            C[indicesC] = alpha * A[indicesA] * B[indicesB] + beta * C[indicesC]
 
         where alpha and beta are scalors and A, B, and C correspond to arbitrary
@@ -69,7 +70,7 @@ def tensorMult( alpha, A, indicesA, B, indicesB, beta,  C, indicesC):
                         ctypes.c_double(beta) , dataC, sizeC, outerSizeC, indicesC, useRowMajor)
 
 def equal(A, B, numSamples=-1):
-    """ Ensures that alle elements of A and B are pretty much equal (due to limited machine precision) 
+    """ Ensures that alle elements of A and B are pretty much equal (due to limited machine precision)
 
     Parameter:
     numSamples: number of random samples to compare (-1: all). This values is used to approximate this function and speed the result up."
@@ -94,3 +95,62 @@ def equal(A, B, numSamples=-1):
          if(relError > 4e-5 and min(Aabs,Babs) > threshold ):
             error += 1
     return error == 0
+
+def einsum(string, *arg_list):
+    """
+    A wrapper around np.einsum. We call TensorMult in TCL library if a tensor multiplication is called, i.e. two operands in einsum.
+    For all other cases, we return the result of np.einsum.
+    For simplicity, we always cast the nd.array to be contiguousarray. One could also choose to cast all nd.array to Fortran array.
+
+    Input Parameters:
+        We take exactly the same format as np.einsum function, with a string and the operands.
+    """
+    if len(list(arg_list)) != 2:
+        return np.einsum(string, *arg_list)
+    else:
+        T_a, T_b = arg_list
+
+    if np.isfortran(T_a) or np.isfortran(T_b):
+        print("encounter F_array")
+        # raise
+
+        # or do np.asfortranarray(T_a) (T_b) order ='F'
+        # see also https://stackoverflow.com/questions/27567876/copying-array-changes-data-from-c-contiguous-to-f-contiguous
+
+    # There is some situation when T is not Contiguous nor Fortan
+    T_a = np.ascontiguousarray(T_a)
+    T_b = np.ascontiguousarray(T_b)
+
+    order = 'C'
+    # [TODO] benchmark whether 'C', 'F' affect the result
+    floatType = T_a.dtype
+    if floatType != T_b.dtype:
+        raise
+
+    if floatType in [np.complex64, np.complex128]:
+        print("complex is not supproted")
+        raise NotImplementedError
+
+    np_indA, np_indB, np_indC = re.split(' , | ,|, |,|->', string)
+    # [TODO] implement this ?
+    if len(np_indC) == 0:
+        return np.einsum(string, *arg_list)
+
+    sizes = {}
+    shapeA = T_a.shape
+    for idx, ind in enumerate(np_indA):
+        sizes[ind] = shapeA[idx]
+
+    shapeB = T_b.shape
+    for idx, ind in enumerate(np_indB):
+        sizes[ind] = shapeB[idx]
+
+    indA = ','.join(list(np_indA))
+    indB = ','.join(list(np_indB))
+    indC = ','.join(list(np_indC))
+    sizeC = [sizes[idx] for idx in np_indC]
+
+    T_c = np.empty(sizeC, order=order, dtype=floatType)
+
+    tensorMult(1, T_a, indA, T_b, indB, 0., T_c, indC)
+    return T_c
