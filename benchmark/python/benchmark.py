@@ -1,4 +1,9 @@
-import tcl
+import sys
+if sys.version_info[0] < 3:
+    import tcl
+else:
+    import tcl.tcl as tcl
+
 import numpy as np
 import time
 import argparse
@@ -97,8 +102,9 @@ for idx in args.indB.split(","):
 perm = []
 for idx in indC.replace(',',''):
     perm.append(indC_np.find(idx))
-#print indA, indB, indC_np, indC.replace(',','')
-#print perm, axesA,axesB
+
+# print(indA, indB, indC_np, indC.replace(',',''))
+# print(perm, axesA, axesB)
 
 timeTCL = 1e100
 for i in range(3):
@@ -111,7 +117,7 @@ timeNP = 1e100
 for i in range(3):
    Mb = Ma *1.1 +  Mb #trash cache
    s = time.time()
-   #C_ = np.einsum("%s,%s->%s"%(indA.replace(',',''),indB.replace(',',''),indC.replace(',','')), A, B)
+   # C_ = np.einsum("%s,%s->%s"%(indA.replace(',',''),indB.replace(',',''),indC.replace(',','')), A, B)
    if( indC.replace(',','') != indC_np ): #transpose required
        C_ = np.transpose(np.tensordot(A, B, axes=(axesA,axesB)),perm).copy(order=order)
    else:
@@ -119,8 +125,8 @@ for i in range(3):
    timeNP = min(time.time() - s, timeNP)
 
 if( not tcl.equal(C, C_, 1000) ):
-    print "ERROR: validation" + FAIL + " failed!!!" + ENDC
-    print indC.replace(',','') != indC_np #transpose required
+    print("ERROR: validation" + FAIL + " failed!!!" + ENDC)
+    print(indC.replace(',','') != indC_np) #transpose required
 else:
-    print "%.2f GFLOPS %.2f GFLOPS speedup: %.2fx"%( gflops/timeTCL, gflops/timeNP, timeNP/ timeTCL)
-    print indC.replace(',','') != indC_np #transpose required
+    print("%.2f GFLOPS %.2f GFLOPS speedup: %.2fx"%( gflops/timeTCL, gflops/timeNP, timeNP/ timeTCL))
+    print(indC.replace(',','') != indC_np) #transpose required
