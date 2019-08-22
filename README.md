@@ -1,3 +1,5 @@
+This project is no longer maintained, please consider to use its GPU counterpart: https://developer.nvidia.com/cutensor
+
 # Tensor Contraction Library (TCL) for C++ (and Python)
 
 TCL is a C++ library for high-performance tensor contractions; TCL also includes
